@@ -36,5 +36,19 @@ CMD:=
 cmd:
 	$(CMD)
 
-run:
-	python color-sort.py
+images.rgb.hsv.csv:
+	./sort-images.py assets -o images.rgb.hsv.csv
+
+sort: images.rgb.hsv.csv
+
+filmstrip.jpg: images.rgb.hsv.csv
+	./list2filmstrip.py -i images.rgb.hsv.csv -o filmstrip.jpg -x 200 -y 200
+
+test: filmstrip.jpg
+	open -a "firefox" filmstrip.jpg
+
+run: sort filmstrip.jpg
+
+clean:
+	rm -f images.rgb.hsv.csv
+	rm -f filmstrip.jpg
