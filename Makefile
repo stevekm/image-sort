@@ -45,7 +45,8 @@ filmstrip.jpg: images.rgb.hsv.csv
 	./list2filmstrip.py -i images.rgb.hsv.csv -o filmstrip.jpg -x 200 -y 200
 
 test: filmstrip.jpg
-	open -a "firefox" filmstrip.jpg
+	# open -a "firefox" filmstrip.jpg
+	./list2collage.py
 
 run: sort filmstrip.jpg
 

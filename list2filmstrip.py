@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 """
+Make a horizontal filmstrip image from thumbnails of all the images in the list file
 """
 import os
 import argparse
-import colorsys
 from PIL import Image
 
 def load_images_from_list(list_file):
     """
+    Load the file paths from the list file provided
     """
     all_images = []
     with open(list_file) as f:
