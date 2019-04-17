@@ -53,4 +53,4 @@ run: sort filmstrip.jpg collage.jpg
 
 clean:
 	rm -f images.rgb.hsv.csv
-	rm -f filmstrip.jpg
+	rm -f filmstrip.jpg collage.jpg
