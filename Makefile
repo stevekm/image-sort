@@ -44,11 +44,12 @@ sort: images.rgb.hsv.csv
 filmstrip.jpg: images.rgb.hsv.csv
 	./list2filmstrip.py -i images.rgb.hsv.csv -o filmstrip.jpg -x 200 -y 200
 
-test: filmstrip.jpg
-	# open -a "firefox" filmstrip.jpg
-	./list2collage.py
+collage.jpg: images.rgb.hsv.csv
+	./list2collage.py -i images.rgb.hsv.csv
 
-run: sort filmstrip.jpg
+test: filmstrip.jpg collage.jpg
+
+run: sort filmstrip.jpg collage.jpg
 
 clean:
 	rm -f images.rgb.hsv.csv
