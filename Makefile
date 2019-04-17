@@ -36,21 +36,23 @@ CMD:=
 cmd:
 	$(CMD)
 
-images.rgb.hsv.csv:
-	./sort-images.py assets -o images.rgb.hsv.csv
+IMGDIR:=assets
+OUTPUTLIST:=images.rgb.hsv.csv
+$(OUTPUTLIST):
+	./sort-images.py "$(IMGDIR)" -o "$(OUTPUTLIST)"
 
-sort: images.rgb.hsv.csv
+sort: $(OUTPUTLIST)
 
-filmstrip.jpg: images.rgb.hsv.csv
-	./list2filmstrip.py -i images.rgb.hsv.csv -o filmstrip.jpg -x 200 -y 200
+filmstrip.jpg: $(OUTPUTLIST)
+	./list2filmstrip.py -i $(OUTPUTLIST) -o filmstrip.jpg -x 200 -y 200
 
-collage.jpg: images.rgb.hsv.csv
-	./list2collage.py -i images.rgb.hsv.csv
+collage.jpg: $(OUTPUTLIST)
+	./list2collage.py -i $(OUTPUTLIST)
 
 test: filmstrip.jpg collage.jpg
 
 run: sort filmstrip.jpg collage.jpg
 
 clean:
-	rm -f images.rgb.hsv.csv
+	rm -f $(OUTPUTLIST)
 	rm -f filmstrip.jpg collage.jpg
