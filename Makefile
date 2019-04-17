@@ -36,5 +36,23 @@ CMD:=
 cmd:
 	$(CMD)
 
-run:
-	python color-sort.py
+IMGDIR:=assets
+OUTPUTLIST:=images.rgb.hsv.csv
+$(OUTPUTLIST):
+	./sort-images.py "$(IMGDIR)" -o "$(OUTPUTLIST)"
+
+sort: $(OUTPUTLIST)
+
+filmstrip.jpg: $(OUTPUTLIST)
+	./list2filmstrip.py -i $(OUTPUTLIST) -o filmstrip.jpg -x 200 -y 200
+
+collage.jpg: $(OUTPUTLIST)
+	./list2collage.py -i $(OUTPUTLIST)
+
+test: filmstrip.jpg collage.jpg
+
+run: sort filmstrip.jpg collage.jpg
+
+clean:
+	rm -f $(OUTPUTLIST)
+	rm -f filmstrip.jpg collage.jpg
