@@ -56,3 +56,10 @@ run: sort filmstrip.jpg collage.jpg
 clean:
 	rm -f $(OUTPUTLIST)
 	rm -f filmstrip.jpg collage.jpg
+
+
+docker-build:
+	docker build -t stevekm/image-sort .
+
+docker-test:
+	docker run --rm -ti stevekm/image-sort bash

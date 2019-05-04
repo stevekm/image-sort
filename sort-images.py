@@ -3,6 +3,8 @@
 Script to sort images based on HSV values (converted from RGB values)
 
 Outputs a .csv file with the images in order of Hue value
+
+https://www.alanzucconi.com/2015/09/30/colour-sorting/
 """
 import os
 import csv
