@@ -17,6 +17,7 @@ def main(**kwargs):
     ignore_file = kwargs.pop('ignore_file', None) # file to write sorted list to
     input_path = os.path.realpath(input)
     avg = get_img_avg_rgb(image = input_path, ignore = ignore_file)
+    avg['path'] = input_path
 
     fieldnames = avg.keys()
     with open(output_file, "w") as f:

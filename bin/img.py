@@ -72,11 +72,11 @@ def get_img_avg_rgb(image, ignore = None):
         'red': 0,
         'green': 0,
         'blue': 0,
-        'pixels_total' = size_x * size_y,
-        'pixels_counted' = 0
+        'pixels_total' : size_x * size_y,
+        'pixels_counted' : 0
         }
 
-    print("Loaded image: {0} total pixels".format(pixels_total))
+    print("Loaded image: {0} total pixels".format(avg['pixels_total']))
 
     # add up the RGB values for all pixels
     for x in range(img.size[0]): # iterate over all x pixels
@@ -111,5 +111,5 @@ def get_img_avg_rgb(image, ignore = None):
 
     # calculate percent
     avg['pixels_pcnt'] = round((float(avg['pixels_counted']) / float(avg['pixels_total'])) * 100, 1)
-    
+
     return(avg)
