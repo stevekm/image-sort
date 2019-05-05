@@ -7,9 +7,9 @@ apt-get install -y wget \
 bzip2 \
 git
 
-RUN wget https://repo.continuum.io/miniconda/Miniconda2-4.4.10-Linux-x86_64.sh && \
-bash Miniconda2-4.4.10-Linux-x86_64.sh -b -p /conda && \
-rm -f Miniconda2-4.4.10-Linux-x86_64.sh
+RUN wget https://repo.continuum.io/miniconda/Miniconda2-4.5.12-Linux-x86_64.sh && \
+bash Miniconda2-4.5.12-Linux-x86_64.sh -b -p /conda && \
+rm -f Miniconda2-4.5.12-Linux-x86_64.sh
 ENV PATH="/conda/bin:${PATH}"
 RUN conda install -y -c anaconda \
 python=2.7 \
