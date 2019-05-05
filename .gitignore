@@ -7,3 +7,5 @@ output/
 work/
 .nextflow*
 *.pyc
+nextflow.html*
+timeline.html*

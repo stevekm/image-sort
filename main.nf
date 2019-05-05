@@ -1,8 +1,8 @@
 params.imgdir = "assets/jpg"
 params.ignorePixels = "ignore-pixels-white.jpg"
 params.outputDir = "output"
-Channel.fromPath("${params.imgdir}/**.jpg").into { input_imgs; input_imgs2 }
 
+Channel.fromPath("${params.imgdir}/**.jpg").into { input_imgs; input_imgs2 }
 Channel.fromPath("${params.ignorePixels}").set { ignore_pixels_ch }
 
 process ignore_pixels {
@@ -22,7 +22,6 @@ process ignore_pixels {
 }
 
 process img2avg_rgb {
-    maxForks 4
     input:
     set file(img), file(ignore_file) from input_imgs.combine(ignore_pixels_file)
 
