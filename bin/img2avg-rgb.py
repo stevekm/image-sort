@@ -13,13 +13,16 @@ def main(**kwargs):
     Main control function for the program
     """
     input = kwargs.pop('input')[0] # list of input items
-    input_path = os.path.realpath(input)
     output_file = kwargs.pop('output_file') # file to write sorted list to
-    red, green, blue = get_img_avg_rgb(input_path)
-    hue, saturation, value = colorsys.rgb_to_hsv(red, green, blue)
+    ignore_file = kwargs.pop('ignore_file', None) # file to write sorted list to
+    input_path = os.path.realpath(input)
+    avg = get_img_avg_rgb(image = input_path, ignore = ignore_file)
+
+    fieldnames = avg.keys()
     with open(output_file, "w") as f:
-        writer = csv.writer(f)
-        writer.writerow([ input_path, red, green, blue, hue, saturation, value ])
+        writer = csv.DictWriter(f, delimiter = ',', fieldnames = fieldnames)
+        writer.writeheader()
+        writer.writerow(avg)
 
 def parse():
     """
@@ -40,7 +43,6 @@ def parse():
         help = "File containing a comma separated list of RGB values to ignore when calculating the average RBG and HSV values for an image")
 
     args = parser.parse_args()
-
     main(**vars(args))
 
 if __name__ == '__main__':
