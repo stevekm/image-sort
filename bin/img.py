@@ -55,15 +55,14 @@ def get_img_avg_rgb(image, ignore = None):
     https://www.hackzine.org/getting-average-image-color-from-python.html
     https://stackoverflow.com/questions/6208980/sorting-a-list-of-rgb-triplets-into-a-spectrum
     """
-    ignore_pixels = None
+    ignore_pixels = set()
     if ignore != None:
         ignore_pixels_list = load_csv_rgbhsv(input_path = ignore)
         ignore_pixels_list = [ (tup[0], tup[1], tup[2]) for tup in ignore_pixels_list ]
-        ignore_pixels = {}
         for tup in ignore_pixels_list:
             id = "{0}{1}{2}".format(tup[0], tup[1], tup[2])
-            ignore_pixels[id] = ''
-        print("Loaded {0} ignore pixels".format(len(ignore_pixels.keys())))
+            ignore_pixels.add(id)
+        print("Loaded {0} ignore pixels".format(len(ignore_pixels)))
     img = Image.open(image).convert('RGB')
     pixels = img.load()
     size_x = img.size[0]
@@ -86,9 +85,9 @@ def get_img_avg_rgb(image, ignore = None):
             blue = pixels[x, y][2]
 
             # skip the pixel if it matches one of the ignored pixels
-            if ignore_pixels != None:
+            if len(ignore_pixels) > 0:
                 id = "{0}{1}{2}".format(red, green, blue)
-                if id not in ignore_pixels.keys():
+                if id not in ignore_pixels:
                     avg['red'] += red
                     avg['green'] += green
                     avg['blue'] += blue
