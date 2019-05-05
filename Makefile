@@ -70,6 +70,8 @@ clean:
 	rm -f $(OUTPUTLIST)
 	rm -f filmstrip.jpg collage.jpg
 	rm -f .nextflow.log*
+	rm -f nextflow.html*
+	rm -f timeline.html*
 
 
 docker-build:
