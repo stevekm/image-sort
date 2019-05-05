@@ -6,3 +6,4 @@ nextflow
 output/
 work/
 .nextflow*
+*.pyc
