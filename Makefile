@@ -9,11 +9,11 @@ unexport PYTHONHOME
 
 # install versions of conda for Mac or Linux
 ifeq ($(UNAME), Darwin)
-CONDASH:=Miniconda2-4.5.4-MacOSX-x86_64.sh
+CONDASH:=Miniconda2-4.4.10-MacOSX-x86_64.sh
 endif
 
 ifeq ($(UNAME), Linux)
-CONDASH:=Miniconda2-4.5.4-Linux-x86_64.sh
+CONDASH:=Miniconda2-4.4.10-Linux-x86_64.sh
 endif
 
 CONDAURL:=https://repo.continuum.io/miniconda/$(CONDASH)
