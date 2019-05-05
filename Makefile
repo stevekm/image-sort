@@ -1,5 +1,9 @@
 SHELL:=/bin/bash
 UNAME:=$(shell uname)
+export NXF_VER:=19.01.0
+
+nextflow:
+	curl -fsSL get.nextflow.io | bash
 
 # ~~~~~ Setup Conda ~~~~~ #
 # this sets the system PATH to ensure we are using in included 'conda' installation for all software
@@ -27,14 +31,15 @@ conda:
 
 # install the conda and python packages required
 # NOTE: **MUST** install ncurses from conda-forge for RabbitMQ to work!!
-conda-install: conda
+conda-install: conda nextflow
 	conda install -y -c anaconda \
 	python=2.7 \
-	pil=1.1.7
+	pil=1.1.7 \
 
 CMD:=
 cmd:
 	$(CMD)
+
 
 IMGDIR:=assets
 OUTPUTLIST:=images.rgb.hsv.csv
@@ -51,11 +56,20 @@ collage.jpg: $(OUTPUTLIST)
 
 test: filmstrip.jpg collage.jpg
 
-run: sort filmstrip.jpg collage.jpg
+# run: sort filmstrip.jpg collage.jpg
+
+EP:=
+run:
+	./nextflow run main.nf $(EP)
+
+
+
+
 
 clean:
 	rm -f $(OUTPUTLIST)
 	rm -f filmstrip.jpg collage.jpg
+	rm -f .nextflow.log*
 
 
 docker-build:

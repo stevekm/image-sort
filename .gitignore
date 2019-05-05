@@ -2,3 +2,7 @@
 conda
 test.py
 example_images/
+nextflow
+output/
+work/
+.nextflow*
