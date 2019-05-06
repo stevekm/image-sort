@@ -21,7 +21,10 @@ def main(**kwargs):
 
     fieldnames = avg.keys()
     with open(output_file, "w") as f:
-        writer = csv.DictWriter(f, delimiter = ',', fieldnames = fieldnames)
+        writer = csv.DictWriter(f,
+            delimiter = ',',
+            fieldnames = fieldnames,
+            quoting=csv.QUOTE_ALL)
         writer.writeheader()
         writer.writerow(avg)
 
