@@ -60,7 +60,8 @@ collage: output/imgs.rgb.hsv.csv
 	./bin/csv2collage.py -i output/imgs.rgb.hsv.csv && \
 	open collage.jpg
 
-
+thumbnails: output/imgs.rgb.hsv.csv output/thumbnails
+	./bin/csv2thumbnails.py -i output/imgs.rgb.hsv.csv -o output/thumbnails
 
 
 clean:
