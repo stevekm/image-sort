@@ -67,7 +67,7 @@ thumbnails: output/imgs.rgb.hsv.csv output/thumbnails
 # requires imagemagick; sudo apt-get install imagemagick
 NUM_JPG:=$(shell find output/thumbnails/ -name "*.jpg" | wc -l | tr -d ' ')
 gif:
-	convert -delay 10 -loop 0 output/thumbnails/{1..$(NUM_JPG)}.jpg output/sequence.gif
+	convert -resize 90% -delay 10 -loop 0 output/thumbnails/{1..$(NUM_JPG)}.jpg output/sequence.gif
 
 
 clean:
