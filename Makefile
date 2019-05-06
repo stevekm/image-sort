@@ -33,9 +33,10 @@ conda:
 # install the conda and python packages required
 # NOTE: **MUST** install ncurses from conda-forge for RabbitMQ to work!!
 conda-install: conda nextflow
-	conda install -y -c anaconda \
+	conda install -y -c anaconda -c conda-forge \
 	python=2.7 \
 	pil=1.1.7 \
+	imagemagick
 
 CMD:=
 cmd:
@@ -62,6 +63,11 @@ collage: output/imgs.rgb.hsv.csv
 
 thumbnails: output/imgs.rgb.hsv.csv output/thumbnails
 	./bin/csv2thumbnails.py -i output/imgs.rgb.hsv.csv -o output/thumbnails
+
+# requires imagemagick; sudo apt-get install imagemagick
+NUM_JPG:=$(shell find output/thumbnails/ -name "*.jpg" | wc -l | tr -d ' ')
+gif:
+	convert -delay 10 -loop 0 output/thumbnails/{1..$(NUM_JPG)}.jpg output/sequence.gif
 
 
 clean:
