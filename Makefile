@@ -2,6 +2,7 @@ SHELL:=/bin/bash
 UNAME:=$(shell uname)
 export NXF_VER:=19.01.0
 
+# requires Java installation
 nextflow:
 	curl -fsSL get.nextflow.io | bash
 
@@ -41,27 +42,23 @@ cmd:
 	$(CMD)
 
 
-IMGDIR:=assets
-OUTPUTLIST:=images.rgb.hsv.csv
-$(OUTPUTLIST):
-	./sort-images.py "$(IMGDIR)" -o "$(OUTPUTLIST)"
+# IMGDIR:=assets
+# OUTPUTLIST:=images.rgb.hsv.csv
+# $(OUTPUTLIST):
+# 	./sort-images.py "$(IMGDIR)" -o "$(OUTPUTLIST)"
+#
+# sort: $(OUTPUTLIST)
+# filmstrip.jpg: $(OUTPUTLIST)
+# 	./list2filmstrip.py -i $(OUTPUTLIST) -o filmstrip.jpg -x 200 -y 200
 
-sort: $(OUTPUTLIST)
-
-filmstrip.jpg: $(OUTPUTLIST)
-	./list2filmstrip.py -i $(OUTPUTLIST) -o filmstrip.jpg -x 200 -y 200
-
-collage.jpg: $(OUTPUTLIST)
-	./list2collage.py -i $(OUTPUTLIST)
-
-test: filmstrip.jpg collage.jpg
-
-# run: sort filmstrip.jpg collage.jpg
 
 EP:=
 run:
 	./nextflow run main.nf $(EP)
 
+collage: output/imgs.rgb.hsv.csv
+	./bin/csv2collage.py -i output/imgs.rgb.hsv.csv && \
+	open collage.jpg
 
 
 

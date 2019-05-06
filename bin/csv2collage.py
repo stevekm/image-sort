@@ -6,7 +6,6 @@ import os
 import csv
 import argparse
 from PIL import Image
-from PIL import ImageDraw
 
 def load_images_from_list(list_file):
     """
@@ -23,9 +22,9 @@ def load_images_from_list(list_file):
         for row in reader:
             d = {}
             d['path'] = row['path']
-            d['red'] = row['red']
-            d['blue'] = row['blue']
-            d['green'] = row['green']
+            d['red'] = int(row['red'])
+            d['blue'] = int(row['blue'])
+            d['green'] = int(row['green'])
             d['hue'] = row['hue']
             d['saturation'] = row['saturation']
             d['value'] = row['value']
@@ -70,9 +69,9 @@ def make_collage(input_files, output_file, x, y, ncol, bar_height):
     img_num = 0
     for input_image in input_files:
         img_path = input_image['path']
-        red = int(input_image['red'])
-        blue = int(input_image['blue'])
-        green = int(input_image['green'])
+        red = input_image['red']
+        blue = input_image['blue']
+        green = input_image['green']
         hue = input_image['hue']
         saturation = input_image['saturation']
         value = input_image['value']
