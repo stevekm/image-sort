@@ -52,7 +52,7 @@ cmd:
 # filmstrip.jpg: $(OUTPUTLIST)
 # 	./list2filmstrip.py -i $(OUTPUTLIST) -o filmstrip.jpg -x 200 -y 200
 
-
+# make run EP='--imgdir example_images --ignorePixels ignore-pixels-woodgrain.jpg'
 EP:=
 run:
 	./nextflow run main.nf $(EP)
