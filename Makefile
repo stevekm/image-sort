@@ -79,9 +79,11 @@ clean:
 	rm -f timeline.html*
 # rm -f $(OUTPUTLIST)
 
+DOCKERTAG:=stevekm/image-sort:latest
 docker-build:
-	docker build -t stevekm/image-sort .
+	docker build -t "$(DOCKERTAG)" .
+# docker push stevekm/image-sort:latest
 
 docker-test:
 	mkdir -p docker-output/thumbnails
-	docker run --rm -ti -v "$${PWD}/docker-output:/output" stevekm/image-sort bash -c 'cd /image-sort && nextflow run main.nf --outputDir /output && make thumbnails OUTPUTDIR=/output && make gif OUTPUTDIR=/output && mv *.html /output/'
+	docker run --rm -ti -v "$${PWD}/docker-output:/output" "$(DOCKERTAG)" bash -c 'cd /image-sort && nextflow run main.nf --outputDir /output && make thumbnails OUTPUTDIR=/output && make gif OUTPUTDIR=/output && mv *.html /output/'
