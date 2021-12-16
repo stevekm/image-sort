@@ -83,7 +83,5 @@ docker-build:
 	docker build -t stevekm/image-sort .
 
 docker-test:
-	mkdir -p docker-output
-	docker run --rm -ti -V "$${PWD}/docker-output:/output" stevekm/image-sort bash -c '
-	cd /image-sort && nextflow run --report /output/report.html --timeline /output/timeline.html main.nf --outputDir /output && make thumbnails && make gif
-	'
+	mkdir -p docker-output/thumbnails
+	docker run --rm -ti -v "$${PWD}/docker-output:/output" stevekm/image-sort bash -c 'cd /image-sort && nextflow run main.nf --outputDir /output && make thumbnails OUTPUTDIR=/output && make gif OUTPUTDIR=/output && mv *.html /output/'

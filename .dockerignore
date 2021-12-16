@@ -9,3 +9,4 @@ work/
 *.pyc
 nextflow.html*
 timeline.html*
+docker-output
