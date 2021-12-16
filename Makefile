@@ -86,4 +86,4 @@ docker-build:
 
 docker-test:
 	mkdir -p docker-output/thumbnails
-	docker run --rm -ti -v "$${PWD}/docker-output:/output" "$(DOCKERTAG)" bash -c 'cd /image-sort && nextflow run main.nf --outputDir /output && make thumbnails OUTPUTDIR=/output && make gif OUTPUTDIR=/output && mv *.html /output/'
+	docker run --rm -ti -v "$${PWD}/docker-output:/output" "$(DOCKERTAG)" bash -c 'nextflow run main.nf --outputDir /output && make thumbnails OUTPUTDIR=/output && make gif OUTPUTDIR=/output && mv *.html /output/'
