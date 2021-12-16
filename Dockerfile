@@ -8,3 +8,4 @@ RUN git clone https://github.com/stevekm/image-sort.git && \
 cd /image-sort && \
 make nextflow
 ENV PATH="/image-sort:/image-sort/bin:${PATH}"
+WORKDIR /image-sort
