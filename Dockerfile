@@ -1,17 +1,10 @@
-FROM ubuntu:16.04
+FROM continuumio/miniconda:4.4.10
 
 MAINTAINER Stephen M. Kelly
 
-RUN apt-get update && \
-apt-get install -y wget \
-bzip2 \
-git
-
-RUN wget https://repo.continuum.io/miniconda/Miniconda2-4.5.12-Linux-x86_64.sh && \
-bash Miniconda2-4.5.12-Linux-x86_64.sh -b -p /conda && \
-rm -f Miniconda2-4.5.12-Linux-x86_64.sh
-ENV PATH="/conda/bin:${PATH}"
-RUN conda install -y -c anaconda \
-python=2.7 \
-pil=1.1.7
-RUN git clone https://github.com/stevekm/image-sort.git
+RUN apt-get update && apt-get install -y imagemagick make default-jre
+RUN conda install -y -c anaconda pil=1.1.7
+RUN git clone https://github.com/stevekm/image-sort.git && \
+cd /image-sort && \
+make nextflow
+ENV PATH="/image-sort:/image-sort/bin:${PATH}"
