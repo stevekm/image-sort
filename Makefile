@@ -31,17 +31,19 @@ conda:
 	rm -f "$(CONDASH)"
 
 # install the conda and python packages required
-# NOTE: **MUST** install ncurses from conda-forge for RabbitMQ to work!!
+# NOTE: also need to install imagemagick but it appears to be broken with these versions of other conda packages
 conda-install: conda nextflow
-	conda install -y -c anaconda -c conda-forge \
-	python=2.7 \
-	pil=1.1.7 \
-	imagemagick
+	conda install -y -c anaconda pil=1.1.7 && \
+	printf ">>> Make sure that imagemagick is installed;\n[Ubuntu]: apt-get install -y imagemagick\n[Mac]: brew install imagemagick\n" || \
+	echo ">>> Error encountered while trying to install conda packages"
 
 CMD:=
 cmd:
 	$(CMD)
 
+# enter interactive bash session with the environment from the Makefile activated
+bash:
+	bash
 
 # IMGDIR:=assets
 # OUTPUTLIST:=images.rgb.hsv.csv
@@ -52,34 +54,36 @@ cmd:
 # filmstrip.jpg: $(OUTPUTLIST)
 # 	./list2filmstrip.py -i $(OUTPUTLIST) -o filmstrip.jpg -x 200 -y 200
 
+OUTPUTDIR=output
 # make run EP='--imgdir example_images --ignorePixels ignore-pixels-woodgrain.jpg'
 EP:=
 run:
 	./nextflow run main.nf $(EP)
 
-collage: output/imgs.rgb.hsv.csv
-	./bin/csv2collage.py -i output/imgs.rgb.hsv.csv && \
-	open collage.jpg
+collage: $(OUTPUTDIR)/imgs.rgb.hsv.csv
+	./bin/csv2collage.py -i $(OUTPUTDIR)/imgs.rgb.hsv.csv -o $(OUTPUTDIR)/collage.jpg
 
-thumbnails: output/imgs.rgb.hsv.csv output/thumbnails
-	./bin/csv2thumbnails.py -i output/imgs.rgb.hsv.csv -o output/thumbnails
+thumbnails: $(OUTPUTDIR)/imgs.rgb.hsv.csv $(OUTPUTDIR)/thumbnails
+	./bin/csv2thumbnails.py -i $(OUTPUTDIR)/imgs.rgb.hsv.csv -o $(OUTPUTDIR)/thumbnails
 
 # requires imagemagick; sudo apt-get install imagemagick
-NUM_JPG:=$(shell find output/thumbnails/ -name "*.jpg" | wc -l | tr -d ' ')
+NUM_JPG:=$(shell find $(OUTPUTDIR)/thumbnails/ -name "*.jpg" | wc -l | tr -d ' ')
 gif:
-	convert -resize 90% -delay 10 -loop 0 output/thumbnails/{1..$(NUM_JPG)}.jpg output/sequence.gif
+	convert -resize 90% -delay 10 -loop 0 $(OUTPUTDIR)/thumbnails/{1..$(NUM_JPG)}.jpg $(OUTPUTDIR)/sequence.gif
 
 
 clean:
-	rm -f $(OUTPUTLIST)
 	rm -f filmstrip.jpg collage.jpg
 	rm -f .nextflow.log*
 	rm -f nextflow.html*
 	rm -f timeline.html*
-
+# rm -f $(OUTPUTLIST)
 
 docker-build:
 	docker build -t stevekm/image-sort .
 
 docker-test:
-	docker run --rm -ti stevekm/image-sort bash
+	mkdir -p docker-output
+	docker run --rm -ti -V "$${PWD}/docker-output:/output" stevekm/image-sort bash -c '
+	cd /image-sort && nextflow run --report /output/report.html --timeline /output/timeline.html main.nf --outputDir /output && make thumbnails && make gif
+	'
