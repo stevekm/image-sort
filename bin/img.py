@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 """
 import csv
@@ -14,6 +14,14 @@ def get_img_rgbs(image):
     for x in range(img.size[0]):
         for y in range(img.size[1]):
             yield(pixels[x, y])
+
+def get_img_rbg_hsv(image):
+    """
+    Get the RGB and HSV values for every pixel in an image
+    """
+    for red, green, blue in get_img_rgbs(image):
+        hue, saturation, value = colorsys.rgb_to_hsv(red, green, blue)
+        yield(red, green, blue, hue, saturation, value)
 
 def load_csv_rgbhsv(input_path):
     """
@@ -33,7 +41,7 @@ def load_csv_rgbhsv(input_path):
     return(pixels)
 
 
-def get_img_avg_rgb(image, ignore = None):
+def get_img_avg_rgb(image, ignore = None, _verbose = True):
     """
     Gets the average RGB of an image
     https://codegolf.stackexchange.com/questions/53621/force-an-average-on-an-image
@@ -62,7 +70,8 @@ def get_img_avg_rgb(image, ignore = None):
         for tup in ignore_pixels_list:
             id = "{0}{1}{2}".format(tup[0], tup[1], tup[2])
             ignore_pixels.add(id)
-        print("Loaded {0} ignore pixels".format(len(ignore_pixels)))
+        if _verbose:
+            print("Loaded {0} ignore pixels".format(len(ignore_pixels)))
     img = Image.open(image).convert('RGB')
     pixels = img.load()
     size_x = img.size[0]
@@ -75,7 +84,8 @@ def get_img_avg_rgb(image, ignore = None):
         'pixels_counted' : 0
         }
 
-    print("Loaded image: {0} total pixels".format(avg['pixels_total']))
+    if _verbose:
+        print("Loaded image: {0} total pixels".format(avg['pixels_total']))
 
     # add up the RGB values for all pixels
     for x in range(img.size[0]): # iterate over all x pixels

@@ -14,11 +14,11 @@ unexport PYTHONHOME
 
 # install versions of conda for Mac or Linux
 ifeq ($(UNAME), Darwin)
-CONDASH:=Miniconda2-4.4.10-MacOSX-x86_64.sh
+CONDASH:=Miniconda3-4.7.12-MacOSX-x86_64.sh
 endif
 
 ifeq ($(UNAME), Linux)
-CONDASH:=Miniconda2-4.4.10-Linux-x86_64.sh
+CONDASH:=Miniconda3-4.7.12-Linux-x86_64.sh
 endif
 
 CONDAURL:=https://repo.continuum.io/miniconda/$(CONDASH)
@@ -32,10 +32,11 @@ conda:
 
 # install the conda and python packages required
 # NOTE: also need to install imagemagick but it appears to be broken with these versions of other conda packages
-conda-install: conda nextflow
-	conda install -y -c anaconda pil=1.1.7 && \
-	printf ">>> Make sure that imagemagick is installed;\n[Ubuntu]: apt-get install -y imagemagick\n[Mac]: brew install imagemagick\n" || \
-	echo ">>> Error encountered while trying to install conda packages"
+install: conda nextflow
+	conda install -y anaconda::pillow=8.0.0
+# conda install -y anaconda::pil=1.1.7
+# printf ">>> Make sure that imagemagick is installed;\n[Ubuntu]: apt-get install -y imagemagick\n[Mac]: brew install imagemagick\n" || \
+# echo ">>> Error encountered while trying to install conda packages"
 
 CMD:=
 cmd:

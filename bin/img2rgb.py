@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """
 Convert a single image to a list of its unique RGB and HSV values
+
+TODO: deprecate this module
 """
 import os
 import csv
