@@ -5,6 +5,7 @@ Module with helper functions for image processing tasks
 import csv
 from PIL import Image
 import colorsys
+from multiprocessing import Pool
 from typing import Generator, Tuple, List, Dict
 
 def get_img_rgbs(image: str) -> Generator[Tuple[int, int, int], None, None]:
@@ -133,13 +134,37 @@ def get_img_avg_rgb(
     return(avg)
 
 
-def get_avgs(images: List[str], sort_key = "hue", *args, **kwargs) -> List[Dict]:
+def get_avgs(
+        images: List[str],
+        sort_key: str = "hue",
+        parallel: int = 1,
+        *args,
+        **kwargs) -> List[Dict]:
     """
     Get the average RBG HSV values for all the images
     """
     avgs = []
-    for image in images:
-        avgs.append(get_img_avg_rgb(image, *args, **kwargs))
+    # run in single-threaded mode
+    if parallel == 1:
+        for image in images:
+            avgs.append(get_img_avg_rgb(image, *args, **kwargs))
+
+    # run in multi-threaded mode
+    else:
+        pool = Pool(int(parallel))
+
+        # generate the aysnc result instances
+        results = []
+        for image in images:
+            result = pool.apply_async(get_img_avg_rgb, args=(image, *args), kwds=kwargs)
+            result_tup = (image, result)
+            results.append(result_tup)
+
+         # get each result
+        for result_tup in results:
+            image, result = result_tup
+            avg = result.get()
+            avgs.append(avg)
 
     if sort_key:
         avgs = sorted(avgs, key = lambda avg: avg[sort_key])

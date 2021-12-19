@@ -107,16 +107,17 @@ class TestIMG(unittest.TestCase):
         # get averages from multiple images
         # default sort key = hue
         avgs = get_avgs([colors_jpg, green_jpg, white_jpg], _verbose = False)
-        expected = [
-            white_expected, colors_expected, green_expected
-        ]
+        expected = [white_expected, colors_expected, green_expected]
         self.assertEqual(avgs, expected)
 
         # with no sort key
         avgs = get_avgs([colors_jpg, green_jpg, white_jpg], sort_key = False, _verbose = False)
-        expected = [
-            colors_expected, green_expected, white_expected
-        ]
+        expected = [colors_expected, green_expected, white_expected]
+        self.assertEqual(avgs, expected)
+
+        # run multiple in parallel
+        avgs = get_avgs([colors_jpg, green_jpg, white_jpg], parallel = 2, _verbose = False)
+        expected = [white_expected, colors_expected, green_expected]
         self.assertEqual(avgs, expected)
 
 if __name__ == "__main__":
