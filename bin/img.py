@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 """
+Module with helper functions for image processing tasks
 """
 import csv
 from PIL import Image
 import colorsys
+from typing import Generator, Tuple, List, Dict
 
-def get_img_rgbs(image):
+def get_img_rgbs(image: str) -> Generator[Tuple[int, int, int], None, None]:
     """
     Get the RGB values for every pixel in an image
+
+    Usage
+    -----
+        pixels = [(red, green, blue) for red, green, blue in get_img_rgbs("color.jpg")]
     """
     img = Image.open(image).convert('RGB')
     pixels = img.load()
@@ -15,17 +21,27 @@ def get_img_rgbs(image):
         for y in range(img.size[1]):
             yield(pixels[x, y])
 
-def get_img_rbg_hsv(image):
+def get_img_rbg_hsv(
+    image: str
+    ) -> Generator[Tuple[int, int, int, float, float, int], None, None]:
     """
     Get the RGB and HSV values for every pixel in an image
+
+    Usage
+    -----
+        pixels = [(red, green, blue, hue, saturation, value) for red, green, blue, hue, saturation, value in get_img_rbg_hsv("color.jpg")]
     """
     for red, green, blue in get_img_rgbs(image):
         hue, saturation, value = colorsys.rgb_to_hsv(red, green, blue)
         yield(red, green, blue, hue, saturation, value)
 
-def load_csv_rgbhsv(input_path):
+def load_csv_rgbhsv(
+    input_path: str
+    ) -> List[Tuple[str, str, str, str, str, str]]:
     """
     Load the RGB and HSV values from a .csv file
+
+    TODO: deprecate this !!
     """
     pixels = []
     with open(input_path) as f:
@@ -41,24 +57,17 @@ def load_csv_rgbhsv(input_path):
     return(pixels)
 
 
-def get_img_avg_rgb(image, ignore = None, _verbose = True):
+def get_img_avg_rgb(
+    image: str,
+    ignore: str = None,
+    _verbose: bool = True
+    ) -> Dict:
     """
     Gets the average RGB of an image
-    https://codegolf.stackexchange.com/questions/53621/force-an-average-on-an-image
 
-    Parameters
-    ----------
-    image: str
-        the path to an image file
-
-    Returns
-    -------
-    list
-        a list of three values; [r, g, b]
-
-
-    Other resources
+    Notes
     ---------------
+    https://codegolf.stackexchange.com/questions/53621/force-an-average-on-an-image
     http://pythonicprose.blogspot.com/2009/09/python-find-average-rgb-color-for-image.html
     https://www.hackzine.org/getting-average-image-color-from-python.html
     https://stackoverflow.com/questions/6208980/sorting-a-list-of-rgb-triplets-into-a-spectrum
@@ -122,3 +131,17 @@ def get_img_avg_rgb(image, ignore = None, _verbose = True):
     avg['pixels_pcnt'] = round((float(avg['pixels_counted']) / float(avg['pixels_total'])) * 100, 1)
 
     return(avg)
+
+
+def get_avgs(images: List[str], sort_key = "hue", *args, **kwargs) -> List[Dict]:
+    """
+    Get the average RBG HSV values for all the images
+    """
+    avgs = []
+    for image in images:
+        avgs.append(get_img_avg_rgb(image, *args, **kwargs))
+
+    if sort_key:
+        avgs = sorted(avgs, key = lambda avg: avg[sort_key])
+
+    return(avgs)

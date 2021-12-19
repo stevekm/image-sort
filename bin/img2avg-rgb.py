@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """
 Script to convert an image file to RGB and HSL values
+
+TODO: deprecate this module
 """
 import os
 import csv
