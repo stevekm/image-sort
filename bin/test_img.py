@@ -10,7 +10,7 @@ import colorsys
 import hashlib
 from img import Avg
 from img import make_thumbnail, make_thumbnails, load_all_pixels
-
+from img import make_collage
 
 # get paths to the fixture image files
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -149,6 +149,38 @@ class TestThumbnails(unittest.TestCase):
         md5s = [ md5_file(o) for o in outputs ]
         expected = ['2ec251d19e47649db78db1cfa239908e', '842d20107511fe23c0d8510bb7cde137']
         self.assertEqual(md5s, expected)
+
+class TestCollage(unittest.TestCase):
+    def setUp(self):
+        """this gets run for each test case"""
+        self.preserve = False # save the tmpdir
+        self.tmpdir = mkdtemp() # dir = THIS_DIR
+
+    def tearDown(self):
+        """this gets run for each test case"""
+        if not self.preserve:
+            # remove the tmpdir upon test completion
+            shutil.rmtree(self.tmpdir)
+
+    def test_collage(self):
+        input_avgs = [Avg(colors_jpg), Avg(green_jpg)]
+        output_file = os.path.join(self.tmpdir, "collage.jpg")
+        output = make_collage(input_avgs = input_avgs, output_file = output_file)
+        md5 = md5_file(output)
+        expected = '5045f5e1f214d299ae817b8f7f6421f4'
+        self.assertEqual(md5, expected)
+
+    def test_collage_dir(self):
+        tmp_files = []
+        output_file = os.path.join(self.tmpdir, "collage.jpg")
+        for i in [colors_jpg, green_jpg, red_jpg]:
+            output_path = os.path.join(self.tmpdir, os.path.basename(i))
+            shutil.copyfile(i, output_path)
+            tmp_files.append(output_path)
+        output = make_collage(input_path = self.tmpdir, output_file = output_file, threads = 1, sort_key = False)
+        md5 = md5_file(output)
+        expected = 'df70e227e9feed687f154f88eb09ee06'
+        self.assertEqual(md5, expected)
 
 
 if __name__ == "__main__":

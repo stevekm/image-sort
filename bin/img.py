@@ -309,6 +309,7 @@ def make_thumbnails(
         *args, **kwargs) -> List[str]:
     """
     Create thumbnail images with average color information
+    In parallel for all supplied images
     """
     if not input_files and not input_avgs and not input_path:
         print(">>> ERROR: either input_avgs or input_files or input_path must be supplied")
@@ -365,6 +366,81 @@ def make_thumbnails(
         output_paths.append(output)
     return(output_paths)
 
+def make_collage(
+        input_dicts: List[Dict] = None,
+        input_avgs: List[Avg] = None,
+        input_path: str = None, # dir or csv or file list to load files from
+        input_is_csv: bool = False,
+        output_file: str = "collage.jpg",
+        x: int = 300, # width of each image
+        y: int = 300, # height of each image
+        ncol: int = 8, # number of columns in the collage
+        bar_height: int = 50, # height for average colore bar on each image
+        *args, **kwargs) -> str:
+    """
+    Make a collage image out of the supplied input image
+    Adapted from https://github.com/fwenzel/collage
+    """
+    if not any([input_dicts, input_avgs, input_path]):
+        print(">>> ERROR: either input_avgs or input_dicts or input_path must be supplied")
+        raise
+
+    if input_path and not input_avgs:
+        if input_is_csv:
+            input_avgs = []
+            with open(input_path, "r") as f:
+                reader = csv.DictReader(f, delimiter = ',')
+                for row in reader:
+                    input_avgs.append(Avg.from_dict(d))
+        else:
+            # NOTE: this will automatically apply sorting
+            input_avgs = Avg.from_dir(dir = input_path, *args, **kwargs)
+
+    if input_dicts and not input_avgs:
+        input_avgs = [ Avg.from_dict(d) for d in input_dicts ]
+
+    # get configuration for the output collage
+    num_input_images = len(input_avgs)
+    img_width = x
+    img_height = y
+    img_height_padded = y + bar_height
+    num_rows = num_input_images // ncol + (1 if num_input_images % ncol else 0)
+    canvas_width = img_width * ncol
+    canvas_height = img_height_padded * num_rows
+    canvas_size = (canvas_width, canvas_height)
+
+    # start collage canvas
+    canvas = Image.new('RGB', canvas_size, "black")
+
+    # add each image to the collage canvas
+    img_num = 0
+    for avg in input_avgs:
+        rgb = (avg.red, avg.blue, avg.green)
+
+        # line up top-left corner of image placement based on image number
+        position = img_num
+        x = position % ncol
+        y = position // ncol
+        xoff = x * img_width
+        yoff = y * img_height_padded
+
+        # load the input image and resize
+        image = Image.open(avg.path).resize((img_width, img_height), Image.ANTIALIAS)
+
+        # place color bar on the canvas
+        bar_coord = (xoff, yoff, xoff + img_width, yoff + img_height + bar_height)
+        canvas.paste(rgb, bar_coord)
+
+        # Place tile on canvas.
+        canvas.paste(image, (xoff, yoff))
+
+        img_num += 1
+
+    # save canvas
+    canvas.save(output_file)
+
+    return(output_file)
+
 def main():
     """
     Main control function for running the module from command line
@@ -398,6 +474,11 @@ def main():
     $ bin/img.py thumbnails assets/ --output thumbnail_output/ --threads 6
     """
 
+    # subparser for making collage
+    _collage = subparsers.add_parser('collage', help = 'Create collage from all images which includes the average color for each image')
+    _collage.set_defaults(func = make_collage)
+    """
+    """
 
     args = parser.parse_args()
     args.func(**vars(args))
