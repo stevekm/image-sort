@@ -2,6 +2,7 @@
 """
 Module with helper functions for image processing tasks
 """
+from __future__ import annotations # python 3.7+
 import csv
 from PIL import Image
 import colorsys
@@ -91,7 +92,8 @@ def get_img_avg_rgb(
         'green': 0,
         'blue': 0,
         'pixels_total' : size_x * size_y,
-        'pixels_counted' : 0
+        'pixels_counted' : 0,
+        'path': image
         }
 
     if _verbose:
@@ -170,3 +172,87 @@ def get_avgs(
         avgs = sorted(avgs, key = lambda avg: avg[sort_key])
 
     return(avgs)
+
+
+
+
+
+
+class Avg(object):
+    """
+    Holds the attributes of image's average RGB HSV values
+    """
+    def __init__(self, path: str = None, _verbose: bool = False, *args, **kwargs):
+        if path:
+            self.path = path
+            avg = get_img_avg_rgb(image = self.path, _verbose = _verbose, *args, **kwargs)
+            self.red = avg['red']
+            self.green = avg['green']
+            self.blue = avg['blue']
+            self.hue = avg['hue']
+            self.saturation = avg['saturation']
+            self.value = avg['value']
+            self.pixels_total = avg['pixels_total']
+            self.pixels_counted = avg['pixels_counted']
+            self.pixels_pcnt = avg['pixels_pcnt']
+
+        # initialize empty attributes if using from_dict
+        else:
+            self.path = None
+            self.red = None
+            self.green = None
+            self.blue = None
+            self.hue = None
+            self.saturation = None
+            self.value = None
+            self.pixels_total = None
+            self.pixels_counted = None
+            self.pixels_pcnt = None
+
+    def to_dict(self):
+        d = {
+        'red': self.red,
+        'green': self.green,
+        'blue': self.blue,
+        'hue': self.hue,
+        'saturation': self.saturation,
+        'value': self.value,
+        'pixels_total': self.pixels_total,
+        'pixels_counted': self.pixels_counted,
+        'pixels_pcnt': self.pixels_pcnt,
+        'path': self.path
+        }
+        return(d)
+
+    def __repr__(self):
+        r = 'Avg(' + 'path=' + self.path.__repr__()
+        r += ')'
+        return(r)
+
+    @classmethod
+    def from_dict(cls, d: Dict) -> Avg:
+        """
+        Return an Avg instance from a pre-made dict of values
+        """
+        avg = cls()
+        attrs = ['path', 'red', 'green', 'blue', 'hue', 'saturation', 'value', 'pixels_total', 'pixels_counted', 'pixels_pcnt']
+        for a in attrs:
+            setattr(avg, a, d[a])
+        return(avg)
+
+    @classmethod
+    def from_list(cls,
+        paths: List,
+        sort_key: str = "hue",
+        parallel: int = 2,
+        _verbose: bool = False,
+        *args, **kwargs) -> List[Avg]:
+        """
+        Return a list of Avg objects by evaluating a list of paths in parallel
+        """
+        objs = []
+        avgs = get_avgs(images = paths, sort_key = sort_key, parallel = parallel, _verbose = _verbose, *args, **kwargs)
+        for avg in avgs:
+            obj = cls().from_dict(avg)
+            objs.append(obj)
+        return(objs)

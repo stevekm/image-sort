@@ -8,6 +8,7 @@ import shutil
 from tempfile import mkdtemp
 import colorsys
 from img import get_img_rgbs, get_img_avg_rgb, get_img_rbg_hsv, get_avgs
+from img import Avg
 
 # get paths to the fixture image files
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -19,9 +20,13 @@ colors_jpg = os.path.join(fixtures_dir, "colors.jpg")
 
 
 # these are the expected average values for each image
-colors_expected = {'red': 127, 'green': 127, 'blue': 89, 'pixels_total': 4, 'pixels_counted': 4, 'hue': 0.16666666666666666, 'saturation': 0.2992125984251969, 'value': 127, 'pixels_pcnt': 100.0}
-white_expected = {'red': 255, 'green': 255, 'blue': 255, 'pixels_total': 1, 'pixels_counted': 1, 'hue': 0.0, 'saturation': 0.0, 'value': 255, 'pixels_pcnt': 100.0}
-green_expected = {'red': 1, 'green': 255, 'blue': 1, 'pixels_total': 1, 'pixels_counted': 1, 'hue': 0.3333333333333333, 'saturation': 0.996078431372549, 'value': 255, 'pixels_pcnt': 100.0}
+colors_expected = {'red': 127, 'green': 127, 'blue': 89, 'pixels_total': 4, 'pixels_counted': 4, 'hue': 0.16666666666666666, 'saturation': 0.2992125984251969, 'value': 127, 'pixels_pcnt': 100.0, 'path': colors_jpg}
+
+colors_minus_green_expected = {'blue': 119, 'pixels_total': 4, 'saturation': 0.5, 'pixels_pcnt': 75.0, 'pixels_counted': 3, 'hue': 0.9333333333333333, 'value': 170, 'green': 85, 'red': 170, 'path': colors_jpg}
+
+white_expected = {'red': 255, 'green': 255, 'blue': 255, 'pixels_total': 1, 'pixels_counted': 1, 'hue': 0.0, 'saturation': 0.0, 'value': 255, 'pixels_pcnt': 100.0, 'path': white_jpg}
+
+green_expected = {'red': 1, 'green': 255, 'blue': 1, 'pixels_total': 1, 'pixels_counted': 1, 'hue': 0.3333333333333333, 'saturation': 0.996078431372549, 'value': 255, 'pixels_pcnt': 100.0, 'path': green_jpg}
 
 class TestIMG(unittest.TestCase):
     def setUp(self):
@@ -72,8 +77,7 @@ class TestIMG(unittest.TestCase):
         """
         # get average for mixed colors
         avg = get_img_avg_rgb(colors_jpg, _verbose = False)
-        expected = {'blue': 89, 'pixels_total': 4, 'saturation': 0.2992125984251969, 'pixels_pcnt': 100.0, 'pixels_counted': 4, 'hue': 0.16666666666666666, 'value': 127, 'green': 127, 'red': 127}
-        self.assertDictEqual(avg, expected)
+        self.assertDictEqual(avg, colors_expected)
 
         # write out a tmp file that should equate to green
         green_csv = os.path.join(self.tmpdir, "green.csv")
@@ -83,11 +87,11 @@ class TestIMG(unittest.TestCase):
 
         # get the average after subtracting the green values
         avg = get_img_avg_rgb(colors_jpg, ignore = green_csv,  _verbose = False)
-        expected = {'blue': 119, 'pixels_total': 4, 'saturation': 0.5, 'pixels_pcnt': 75.0, 'pixels_counted': 3, 'hue': 0.9333333333333333, 'value': 170, 'green': 85, 'red': 170}
-        self.assertDictEqual(avg, expected)
+        self.assertDictEqual(avg, colors_minus_green_expected)
 
     def test_get_avgs(self):
         """
+        Check that the correct averages are returned for image files
         """
         # get just average of colors.jpg
         avgs = get_avgs([colors_jpg], _verbose = False)
@@ -101,7 +105,7 @@ class TestIMG(unittest.TestCase):
         with open(green_csv, "w") as f:
             f.write(','.join([ str(v) for v in values ]))
         avgs = get_avgs([colors_jpg], ignore = green_csv, _verbose = False)
-        expected = [{'blue': 119, 'pixels_total': 4, 'saturation': 0.5, 'pixels_pcnt': 75.0, 'pixels_counted': 3, 'hue': 0.9333333333333333, 'value': 170, 'green': 85, 'red': 170}]
+        expected = [colors_minus_green_expected]
         self.assertEqual(avgs, expected)
 
         # get averages from multiple images
@@ -119,6 +123,38 @@ class TestIMG(unittest.TestCase):
         avgs = get_avgs([colors_jpg, green_jpg, white_jpg], parallel = 2, _verbose = False)
         expected = [white_expected, colors_expected, green_expected]
         self.assertEqual(avgs, expected)
+
+class TestAvg(unittest.TestCase):
+    def test_avg(self):
+        """
+        Check that the Avg class returns expected values
+        """
+        avg = Avg(path = colors_jpg)
+        expected = {'blue': 89, 'pixels_total': 4, 'saturation': 0.2992125984251969, 'pixels_pcnt': 100.0, 'pixels_counted': 4, 'hue': 0.16666666666666666, 'value': 127, 'green': 127, 'red': 127}
+        for key in expected.keys():
+            self.assertEqual(getattr(avg, key), expected[key])
+
+    def test_from_dict(self):
+        """
+        Check that Avg objects is instantiated from a dict of values
+        """
+        d = {'blue': 89, 'pixels_total': 4, 'saturation': 0.2992125984251969, 'pixels_pcnt': 100.0, 'pixels_counted': 4, 'hue': 0.16666666666666666, 'value': 127, 'green': 127, 'red': 127, 'path': colors_jpg}
+        avg = Avg().from_dict(d)
+        for key in d.keys():
+            self.assertEqual(getattr(avg, key), d[key])
+
+    def test_from_list(self):
+        """
+        Check that a list of Avg objects can be instantiated from a list of paths
+        """
+        paths = [colors_jpg, green_jpg, white_jpg]
+        avgs = Avg().from_list(paths = paths, sort_key = False)
+        for i, e in enumerate([colors_expected, green_expected, white_expected]):
+            for key in e.keys():
+                self.assertEqual(getattr(avgs[i], key), e[key])
+
+
+
 
 if __name__ == "__main__":
     unittest.main()
