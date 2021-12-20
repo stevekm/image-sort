@@ -3,10 +3,13 @@
 Module with helper functions for image processing tasks
 """
 from __future__ import annotations # python 3.7+
+import sys
 import csv
 from PIL import Image
 import colorsys
 from multiprocessing import Pool
+from pathlib import Path
+import argparse
 from typing import Generator, Tuple, List, Dict
 
 def get_img_rgbs(image: str) -> Generator[Tuple[int, int, int], None, None]:
@@ -256,3 +259,76 @@ class Avg(object):
             obj = cls().from_dict(avg)
             objs.append(obj)
         return(objs)
+
+    @classmethod
+    def from_dir(cls, dir: str, *args, **kwargs) -> List[Avg]:
+        path = Path(dir)
+        paths = [ p for p in path.glob('**/*') if p.is_file() ]
+        avgs = Avg().from_list(paths = paths, *args, **kwargs)
+        return(avgs)
+
+
+
+
+
+
+def print_from_path(
+        path: str,
+        output_file: str = '-',
+        threads: int = 4,
+        func = None):
+    """
+    Print image average RGB values to stdout or file
+    """
+    path = Path(path)
+
+    if not path.exists():
+        print(">>> ERROR: path does not exist: " + str(path))
+        raise
+
+    if path.is_dir():
+        avgs = Avg().from_dir(dir = path, parallel = int(threads))
+        dicts = [avg.to_dict() for avg in avgs]
+
+    if path.is_file():
+        avg = Avg(path = path)
+        dicts = [avg.to_dict()]
+
+    if output_file == '-':
+        fout = sys.stdout # with open(sys.stdout) as fout:
+    else:
+        fout = open(output_file, "w")
+    fieldnames = dicts[0].keys()
+    writer = csv.DictWriter(fout, fieldnames = fieldnames)
+    writer.writeheader()
+    for d in dicts:
+        writer.writerow(d)
+
+    fout.close()
+
+
+def main():
+    """
+    Main control function for running the module from command line
+    """
+    # top level CLI arg parser; args common to all output files go here
+    parser = argparse.ArgumentParser(description = '')
+
+    # add sub-parsers for specific file outputs
+    subparsers = parser.add_subparsers(help ='Sub-commands available')
+    _print = subparsers.add_parser('print', help = 'Print sorted image data to console')
+    _print.add_argument(dest = 'path', help = 'Input path to file or dir to print data for')
+    _print.add_argument('--output', dest = 'output_file', default = "-", help = 'The name of the output file')
+    _print.add_argument('--threads', dest = 'threads', default = 4, help = 'Number of files to process in parallel')
+    _print.set_defaults(func = print_from_path)
+
+
+    args = parser.parse_args()
+    args.func(**vars(args))
+
+
+
+
+
+if __name__ == '__main__':
+    main()
