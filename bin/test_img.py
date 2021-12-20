@@ -143,6 +143,11 @@ class TestAvg(unittest.TestCase):
         for key in expected.keys():
             self.assertEqual(getattr(avg, key), expected[key])
 
+        # test with ignore_vals for green
+        avg = Avg(path = colors_jpg, ignore_vals = [(1, 255, 2)] )
+        for key in colors_minus_green_expected.keys():
+            self.assertEqual(getattr(avg, key), colors_minus_green_expected[key])
+
     def test_from_dict(self):
         """
         Check that Avg objects is instantiated from a dict of values
