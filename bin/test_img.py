@@ -7,8 +7,10 @@ import unittest
 import shutil
 from tempfile import mkdtemp
 import colorsys
-# from img import get_img_rgbs, get_img_avg_rgb, get_img_rbg_hsv, get_avgs
+import hashlib
 from img import Avg
+from img import make_thumbnail, make_thumbnails
+
 
 # get paths to the fixture image files
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -27,6 +29,20 @@ colors_minus_green_expected = {'blue': 119, 'pixels_total': 4, 'saturation': 0.5
 white_expected = {'red': 255, 'green': 255, 'blue': 255, 'pixels_total': 1, 'pixels_counted': 1, 'hue': 0.0, 'saturation': 0.0, 'value': 255, 'pixels_pcnt': 100.0, 'path': white_jpg}
 
 green_expected = {'red': 1, 'green': 255, 'blue': 1, 'pixels_total': 1, 'pixels_counted': 1, 'hue': 0.3333333333333333, 'saturation': 0.996078431372549, 'value': 255, 'pixels_pcnt': 100.0, 'path': green_jpg}
+
+
+def md5_file(filename: str) -> str:
+    """
+    Get md5sum of a file by reading it in small chunks. This avoids issues with Python memory usage when hashing large files.
+    """
+    with open(filename, "rb") as f:
+        file_hash = hashlib.md5()
+        chunk = f.read(8192)
+        while chunk:
+            file_hash.update(chunk)
+            chunk = f.read(8192)
+    hash = file_hash.hexdigest()
+    return(hash)
 
 
 class TestAvg(unittest.TestCase):
@@ -64,13 +80,62 @@ class TestAvg(unittest.TestCase):
                 self.assertEqual(getattr(avgs[i], key), e[key])
 
         # with sort key
-        avgs = Avg().from_list(paths = paths, parallel = 1)
+        # make sure to use  threads = 1 so that list is returned in same order it went in for test case!!
+        avgs = Avg().from_list(paths = paths, threads = 1)
         for i, e in enumerate([white_expected, colors_expected, green_expected]):
             for key in e.keys():
                 self.assertEqual(getattr(avgs[i], key), e[key])
 
 
+class TestThumbnails(unittest.TestCase):
+    def setUp(self):
+        """this gets run for each test case"""
+        self.preserve = False # save the tmpdir
+        self.tmpdir = mkdtemp() # dir = THIS_DIR
 
+    def tearDown(self):
+        """this gets run for each test case"""
+        if not self.preserve:
+            # remove the tmpdir upon test completion
+            shutil.rmtree(self.tmpdir)
+
+    def test_make_thumbnail(self):
+        """
+        Test that a single thumbnail is created as expected
+        """
+        avg = Avg(path = colors_jpg)
+        output_file = os.path.join(self.tmpdir, "0.jpg")
+        output = make_thumbnail(red = avg.red, blue = avg.blue, green = avg.green, input_path = avg.path, output_path = output_file)
+        md5 = md5_file(output)
+        expected = '83a42111ab98bf1d5b472f5df3b6ef9d'
+        self.assertEqual(md5, expected)
+
+    # def test_make_thumbnail_from_avgs_ignore(self):
+    #     # test with ignore file
+    #     # ignore_file
+    #     self.preserve = True
+    #     print()
+    #     print(self.tmpdir)
+
+    def test_make_thumbnails_from_avgs(self):
+        """
+        Test that multiple thumbnails can be created from Avg instances
+        """
+        input_avgs = Avg.from_list([colors_jpg, green_jpg], threads = 1)
+        outputs = make_thumbnails(output_dir = self.tmpdir, input_avgs = input_avgs)
+        md5s = [ md5_file(o) for o in outputs ]
+        expected = ['83a42111ab98bf1d5b472f5df3b6ef9d', '842d20107511fe23c0d8510bb7cde137']
+        self.assertEqual(md5s, expected)
+
+    def test_make_thumbnails_from_files(self):
+        """
+        Test that thumbnails are made from multiple input files
+        """
+        input_files = [colors_jpg, green_jpg]
+        outputs = make_thumbnails(output_dir = self.tmpdir, input_files = input_files)
+        md5s = [ md5_file(o) for o in outputs ]
+        expected = ['83a42111ab98bf1d5b472f5df3b6ef9d', '842d20107511fe23c0d8510bb7cde137']
+        self.assertEqual(md5s, expected)
 
 
 if __name__ == "__main__":

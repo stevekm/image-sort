@@ -10,6 +10,7 @@ https://www.hackzine.org/getting-average-image-color-from-python.html
 https://stackoverflow.com/questions/6208980/sorting-a-list-of-rgb-triplets-into-a-spectrum
 """
 from __future__ import annotations # python 3.7+
+import os
 import sys
 import csv
 from PIL import Image
@@ -157,9 +158,9 @@ class Avg(object):
 
     @classmethod
     def from_list(cls,
-        paths: List,
+        paths: List[str],
         sort_key: str = "hue",
-        parallel: int = 2,
+        threads: int = 2,
         _verbose: bool = False,
         *args, **kwargs) -> List[Avg]:
         """
@@ -167,13 +168,13 @@ class Avg(object):
         """
         avgs = []
         # run in single-threaded mode
-        if parallel == 1:
+        if threads == 1:
             for path in paths:
                 avgs.append(cls.get_avg_rgb_hsv(path, *args, **kwargs))
 
         # run in multi-threaded mode
         else:
-            pool = Pool(int(parallel))
+            pool = Pool(int(threads))
 
             # generate the aysnc result instances
             results = []
@@ -244,7 +245,7 @@ def print_from_path(
         raise
 
     if path.is_dir():
-        avgs = Avg().from_dir(dir = path, parallel = int(threads), **avg_args)
+        avgs = Avg().from_dir(dir = path, threads = int(threads), **avg_args)
         dicts = [avg.to_dict() for avg in avgs]
 
     if path.is_file():
@@ -264,6 +265,88 @@ def print_from_path(
     fout.close()
 
 
+def make_thumbnail(
+        red: int,
+        blue: int,
+        green: int,
+        input_path: str,
+        output_path: str,
+        img_width: int = 300,
+        img_height: int = 300,
+        bar_height: int = 50,
+        ) -> output_path:
+    """
+    Make a thumbnail from a single image and its average RGB values
+    Using the avg RBG as a background color upon which to place and scaled version
+    Of the input image file
+    Final thumbnail size will be img_width * img_height + bar_height
+    """
+    # start collage canvas with a background color of the avg RGB values
+    canvas_size = (img_width, img_height + bar_height)
+    canvas = Image.new('RGB', canvas_size, (red, blue, green))
+    # load image and add to canvas
+    image = Image.open(input_path).resize((img_width, img_height), Image.ANTIALIAS)
+    canvas.paste(image, (0, 0))
+    canvas.save(output_path)
+    return(output_path)
+
+
+def make_thumbnails(
+        output_dir: str,
+        input_path: str = None, # a single input file or directory
+        input_files: List[str] = None, # list of file paths
+        input_avgs: List[Avg] = None, # list of Avg instances
+        x: int = 300,
+        y: int = 300,
+        bar_height: int = 50,
+        *args, **kwargs) -> List[str]:
+    """
+    Create thumbnail images with average color information
+    """
+    if not input_files and not input_avgs and not input_path:
+        print(">>> ERROR: either input_avgs or input_files or input_path must be supplied")
+        raise
+
+    # if input_path was passed, use it to find input_files
+    if input_path:
+        input_path = Path(input_path)
+        # find all files in the dir
+        if input_path.is_dir():
+            input_files = [ p for p in input_path.glob('**/*') if p.is_file() ]
+        elif input_path.is_file():
+            input_files = [input_path]
+
+    if not input_avgs:
+        input_avgs = []
+
+    if input_files and not input_avgs:
+        # NOTE: the images will get sorted by avg RGB HSV here unless sort_key = False is pased
+        input_avgs = Avg().from_list(paths = input_files, *args, **kwargs)
+
+    # make a list of tuples for the values we need to make each thumbnail
+    rgb_paths = []
+    for i, avg in enumerate(input_avgs):
+        output_path = os.path.join(output_dir, str(i + 1) + '.jpg')
+        rgb_path = (avg.red, avg.blue, avg.green, avg.path, output_path)
+        rgb_paths.append(rgb_path)
+
+    # collect output paths for the completed thumbnails
+    output_paths = []
+    for red, blue, green, input_path, output_path in rgb_paths:
+        kwds = {
+            'red': red,
+            'blue': blue,
+            'green': green,
+            'input_path': input_path,
+            'output_path': output_path,
+            'img_width': x,
+            'img_height': y,
+            'bar_height': bar_height
+            }
+        output = make_thumbnail(**kwds)
+        output_paths.append(output)
+    return(output_paths)
+
 def main():
     """
     Main control function for running the module from command line
@@ -273,6 +356,8 @@ def main():
 
     # add sub-parsers for specific file outputs
     subparsers = parser.add_subparsers(help ='Sub-commands available')
+
+    # subparser for printing avg table output
     _print = subparsers.add_parser('print', help = 'Print sorted image data to console')
     _print.add_argument(dest = 'path', help = 'Input path to file or dir to print data for')
     _print.add_argument('--output', dest = 'output_file', default = "-", help = 'The name of the output file')
@@ -282,6 +367,18 @@ def main():
     """
     $ bin/img.py print assets/ --threads 6 --ignore ignore-pixels-white.jpg
     """
+
+    # subparser for making thumbnails
+    _thumbnails = subparsers.add_parser('thumbnails', help = 'Create thumbnails which include the average color for each image')
+    _thumbnails.add_argument('input_path', help = 'Input path to file or dir to make thumbnails for')
+    _thumbnails.add_argument('-o', '--output', dest = 'output_dir', required = True, help = 'The name of the output directory')
+    _thumbnails.add_argument('--threads', dest = 'threads', default = 4, help = 'Number of files to process in parallel')
+    _print.add_argument('--ignore', dest = 'ignore_file', default = None, help = 'File with pixels that should be ignored when calculating averages')
+    _thumbnails.set_defaults(func = make_thumbnails)
+    """
+    $ bin/img.py thumbnails assets/ --output thumbnail_output/ --threads 6
+    """
+
 
     args = parser.parse_args()
     args.func(**vars(args))
