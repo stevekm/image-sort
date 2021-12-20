@@ -9,7 +9,7 @@ from tempfile import mkdtemp
 import colorsys
 import hashlib
 from img import Avg
-from img import make_thumbnail, make_thumbnails
+from img import make_thumbnail, make_thumbnails, load_all_pixels
 
 
 # get paths to the fixture image files
@@ -19,7 +19,7 @@ white_jpg = os.path.join(fixtures_dir, "white.jpg")
 black_jpg = os.path.join(fixtures_dir, "black.jpg")
 green_jpg = os.path.join(fixtures_dir, "green.jpg")
 colors_jpg = os.path.join(fixtures_dir, "colors.jpg")
-
+red_jpg = os.path.join(fixtures_dir, "red.jpg")
 
 # these are the expected average values for each image
 colors_expected = {'red': 127, 'green': 127, 'blue': 89, 'pixels_total': 4, 'pixels_counted': 4, 'hue': 0.16666666666666666, 'saturation': 0.2992125984251969, 'value': 127, 'pixels_pcnt': 100.0, 'path': colors_jpg}
@@ -86,6 +86,16 @@ class TestAvg(unittest.TestCase):
             for key in e.keys():
                 self.assertEqual(getattr(avgs[i], key), e[key])
 
+class TestMisc(unittest.TestCase):
+    def test_load_pixels(self):
+        pixels = load_all_pixels(red_jpg)
+        expected = [(254, 0, 0)]
+        self.assertEqual(pixels, expected)
+
+        pixels = load_all_pixels(colors_jpg)
+        expected = [(254, 0, 0), (255, 255, 103), (1, 255, 2), (1, 0, 254)]
+        self.assertEqual(pixels, expected)
+
 
 class TestThumbnails(unittest.TestCase):
     def setUp(self):
@@ -110,13 +120,6 @@ class TestThumbnails(unittest.TestCase):
         expected = '83a42111ab98bf1d5b472f5df3b6ef9d'
         self.assertEqual(md5, expected)
 
-    # def test_make_thumbnail_from_avgs_ignore(self):
-    #     # test with ignore file
-    #     # ignore_file
-    #     self.preserve = True
-    #     print()
-    #     print(self.tmpdir)
-
     def test_make_thumbnails_from_avgs(self):
         """
         Test that multiple thumbnails can be created from Avg instances
@@ -132,9 +135,19 @@ class TestThumbnails(unittest.TestCase):
         Test that thumbnails are made from multiple input files
         """
         input_files = [colors_jpg, green_jpg]
-        outputs = make_thumbnails(output_dir = self.tmpdir, input_files = input_files)
+        outputs = make_thumbnails(output_dir = self.tmpdir, input_files = input_files, threads = 1, sort_key = False)
         md5s = [ md5_file(o) for o in outputs ]
         expected = ['83a42111ab98bf1d5b472f5df3b6ef9d', '842d20107511fe23c0d8510bb7cde137']
+        self.assertEqual(md5s, expected)
+
+    def test_make_thumbnails_from_avgs_ignore(self):
+        """
+        Test that thumbnails can be made with an ignore file, should given different output
+        """
+        input_files = [colors_jpg, green_jpg]
+        outputs = make_thumbnails(output_dir = self.tmpdir, input_files = input_files, ignore_file = red_jpg, threads = 1, sort_key = False)
+        md5s = [ md5_file(o) for o in outputs ]
+        expected = ['2ec251d19e47649db78db1cfa239908e', '842d20107511fe23c0d8510bb7cde137']
         self.assertEqual(md5s, expected)
 
 

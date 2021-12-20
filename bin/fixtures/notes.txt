@@ -1,0 +1,2 @@
+# get pixel RGB values from
+convert colors.jpg txt:

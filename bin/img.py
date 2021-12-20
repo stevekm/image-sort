@@ -210,6 +210,22 @@ class Avg(object):
 
 # ~~~~~ CLI ~~~~~ #
 # functions for running the module as a command line script
+def load_all_pixels(path: str) -> List[Tuple[int, int, int]]:
+    all_pixels = []
+    # load the unique pixels from the file
+    img = Image.open(path).convert('RGB')
+    pixels = img.load()
+    size_x = img.size[0]
+    size_y = img.size[1]
+
+    for x in range(img.size[0]): # iterate over all x pixels
+        for y in range(img.size[1]): # iterate over all y pixels
+            red = pixels[x, y][0]
+            green = pixels[x, y][1]
+            blue = pixels[x, y][2]
+            all_pixels.append((red, green, blue))
+    return(all_pixels)
+
 def print_from_path(
         path: str,
         output_file: str = '-',
@@ -222,20 +238,9 @@ def print_from_path(
     path = Path(path)
     avg_args = {}
 
-    ignore_pixels = set()
+    ignore_pixels = []
     if ignore_file:
-        # load the unique pixels from the file
-        img = Image.open(ignore_file).convert('RGB')
-        pixels = img.load()
-        size_x = img.size[0]
-        size_y = img.size[1]
-
-        for x in range(img.size[0]): # iterate over all x pixels
-            for y in range(img.size[1]): # iterate over all y pixels
-                red = pixels[x, y][0]
-                green = pixels[x, y][1]
-                blue = pixels[x, y][2]
-                ignore_pixels.add((red, green, blue))
+        ignore_pixels = set(load_all_pixels(ignore_file))
 
     if ignore_pixels:
         avg_args['ignore_vals'] = ignore_pixels
@@ -299,6 +304,8 @@ def make_thumbnails(
         x: int = 300,
         y: int = 300,
         bar_height: int = 50,
+        ignore_file: str = None,
+        rename: bool = True,
         *args, **kwargs) -> List[str]:
     """
     Create thumbnail images with average color information
@@ -306,6 +313,14 @@ def make_thumbnails(
     if not input_files and not input_avgs and not input_path:
         print(">>> ERROR: either input_avgs or input_files or input_path must be supplied")
         raise
+
+    avg_args = {}
+    ignore_pixels = []
+    if ignore_file:
+        ignore_pixels = set(load_all_pixels(ignore_file))
+
+    if ignore_pixels:
+        avg_args['ignore_vals'] = ignore_pixels
 
     # if input_path was passed, use it to find input_files
     if input_path:
@@ -321,12 +336,15 @@ def make_thumbnails(
 
     if input_files and not input_avgs:
         # NOTE: the images will get sorted by avg RGB HSV here unless sort_key = False is pased
-        input_avgs = Avg().from_list(paths = input_files, *args, **kwargs)
+        input_avgs = Avg().from_list(paths = input_files, *args, **avg_args, **kwargs)
 
     # make a list of tuples for the values we need to make each thumbnail
     rgb_paths = []
     for i, avg in enumerate(input_avgs):
-        output_path = os.path.join(output_dir, str(i + 1) + '.jpg')
+        if rename:
+            output_path = os.path.join(output_dir, str(i + 1) + '.jpg')
+        else:
+            output_path = os.path.join(output_dir, os.path.basename(avg.path))
         rgb_path = (avg.red, avg.blue, avg.green, avg.path, output_path)
         rgb_paths.append(rgb_path)
 
@@ -373,7 +391,8 @@ def main():
     _thumbnails.add_argument('input_path', help = 'Input path to file or dir to make thumbnails for')
     _thumbnails.add_argument('-o', '--output', dest = 'output_dir', required = True, help = 'The name of the output directory')
     _thumbnails.add_argument('--threads', dest = 'threads', default = 4, help = 'Number of files to process in parallel')
-    _print.add_argument('--ignore', dest = 'ignore_file', default = None, help = 'File with pixels that should be ignored when calculating averages')
+    _thumbnails.add_argument('--ignore', dest = 'ignore_file', default = None, help = 'File with pixels that should be ignored when calculating averages')
+    _thumbnails.add_argument('--no-rename', dest = 'rename', action = "store_false", help = 'Do not rename the output files. WARNING: files with the same basename will get overwritten')
     _thumbnails.set_defaults(func = make_thumbnails)
     """
     $ bin/img.py thumbnails assets/ --output thumbnail_output/ --threads 6

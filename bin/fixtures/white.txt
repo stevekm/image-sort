@@ -1,0 +1,2 @@
+# ImageMagick pixel enumeration: 1,1,255,srgb
+0,0: (255,255,255)  #FFFFFF  white
