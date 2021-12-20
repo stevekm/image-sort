@@ -9,7 +9,7 @@ from tempfile import mkdtemp
 import colorsys
 import hashlib
 from img import Avg
-from img import make_thumbnail, make_thumbnails, load_all_pixels
+from img import make_thumbnail, make_thumbnails, load_all_pixels, write_csv
 from img import make_collage
 
 # get paths to the fixture image files
@@ -46,6 +46,17 @@ def md5_file(filename: str) -> str:
 
 
 class TestAvg(unittest.TestCase):
+    def setUp(self):
+        """this gets run for each test case"""
+        self.preserve = False # save the tmpdir
+        self.tmpdir = mkdtemp() # dir = THIS_DIR
+
+    def tearDown(self):
+        """this gets run for each test case"""
+        if not self.preserve:
+            # remove the tmpdir upon test completion
+            shutil.rmtree(self.tmpdir)
+
     def test_avg(self):
         """
         Check that the Avg class returns expected values
@@ -83,6 +94,18 @@ class TestAvg(unittest.TestCase):
         # make sure to use  threads = 1 so that list is returned in same order it went in for test case!!
         avgs = Avg().from_list(paths = paths, threads = 1)
         for i, e in enumerate([white_expected, colors_expected, green_expected]):
+            for key in e.keys():
+                self.assertEqual(getattr(avgs[i], key), e[key])
+
+    def test_from_csv(self):
+        """
+        Test loading list of Avg's from a csv file
+        """
+        dicts = [colors_expected, green_expected, white_expected]
+        output_csv = os.path.join(self.tmpdir, "data.csv")
+        write_csv(dicts = dicts, output_file = output_csv)
+        avgs = Avg.from_csv(output_csv)
+        for i, e in enumerate(dicts):
             for key in e.keys():
                 self.assertEqual(getattr(avgs[i], key), e[key])
 
@@ -163,6 +186,9 @@ class TestCollage(unittest.TestCase):
             shutil.rmtree(self.tmpdir)
 
     def test_collage(self):
+        """
+        Test that we can make a collage from Avg instances
+        """
         input_avgs = [Avg(colors_jpg), Avg(green_jpg)]
         output_file = os.path.join(self.tmpdir, "collage.jpg")
         output = make_collage(input_avgs = input_avgs, output_file = output_file)
@@ -171,6 +197,9 @@ class TestCollage(unittest.TestCase):
         self.assertEqual(md5, expected)
 
     def test_collage_dir(self):
+        """
+        Test that we can make a collage from a dir input
+        """
         tmp_files = []
         output_file = os.path.join(self.tmpdir, "collage.jpg")
         for i in [colors_jpg, green_jpg, red_jpg]:
@@ -181,6 +210,20 @@ class TestCollage(unittest.TestCase):
         md5 = md5_file(output)
         expected = 'df70e227e9feed687f154f88eb09ee06'
         self.assertEqual(md5, expected)
+
+    def test_collage_csv(self):
+        """
+        Test that we can make a collage from a .csv file input
+        """
+        output_file = os.path.join(self.tmpdir, "collage.jpg")
+        dicts = [colors_expected, green_expected, white_expected]
+        output_csv = os.path.join(self.tmpdir, "data.csv")
+        write_csv(dicts = dicts, output_file = output_csv)
+        output = make_collage(input_path = output_csv, input_is_csv = True, output_file = output_file, threads = 1, sort_key = False)
+        md5 = md5_file(output)
+        expected = '67d1e4971ab259ee868aef35740648c8'
+        self.assertEqual(md5, expected)
+
 
 
 if __name__ == "__main__":

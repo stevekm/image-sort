@@ -11,3 +11,6 @@ nextflow.html*
 timeline.html*
 collage.jpg
 docker-output/
+data.csv
+thumbnail_output/
+images/

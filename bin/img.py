@@ -204,6 +204,22 @@ class Avg(object):
         avgs = Avg().from_list(paths = paths, *args, **kwargs)
         return(avgs)
 
+    @classmethod
+    def from_csv(cls, csv_file: str) -> List[Avg]:
+        int_attrs = ['red', 'green', 'blue', 'value', 'pixels_total', 'pixels_counted' ]
+        float_attrs = ['hue', 'saturation', 'pixels_pcnt']
+        avgs = []
+        with open(csv_file, "r") as f:
+            reader = csv.DictReader(f, delimiter = ',')
+            for row in reader:
+                for key in int_attrs:
+                    row[key] = int(row[key])
+                for key in float_attrs:
+                    row[key] = float(row[key])
+                avgs.append(cls.from_dict(row))
+        return(avgs)
+
+
 
 
 
@@ -225,6 +241,14 @@ def load_all_pixels(path: str) -> List[Tuple[int, int, int]]:
             blue = pixels[x, y][2]
             all_pixels.append((red, green, blue))
     return(all_pixels)
+
+def write_csv(dicts: List[Dict], output_file: str):
+    with open(output_file, "w") as fout:
+        fieldnames = dicts[0].keys()
+        writer = csv.DictWriter(fout, fieldnames = fieldnames)
+        writer.writeheader()
+        for d in dicts:
+            writer.writerow(d)
 
 def print_from_path(
         path: str,
@@ -387,11 +411,7 @@ def make_collage(
 
     if input_path and not input_avgs:
         if input_is_csv:
-            input_avgs = []
-            with open(input_path, "r") as f:
-                reader = csv.DictReader(f, delimiter = ',')
-                for row in reader:
-                    input_avgs.append(Avg.from_dict(d))
+            input_avgs = Avg.from_csv(input_path)
         else:
             # NOTE: this will automatically apply sorting
             input_avgs = Avg.from_dir(dir = input_path, *args, **kwargs)
@@ -460,6 +480,7 @@ def main():
     _print.set_defaults(func = print_from_path)
     """
     $ bin/img.py print assets/ --threads 6 --ignore ignore-pixels-white.jpg
+    $ bin/img.py print assets/ --threads 6 --ignore ignore-pixels-white.jpg > data.csv
     """
 
     # subparser for making thumbnails
@@ -476,8 +497,14 @@ def main():
 
     # subparser for making collage
     _collage = subparsers.add_parser('collage', help = 'Create collage from all images which includes the average color for each image')
+    _collage.add_argument('input_path', help = 'Input path to file or dir to make thumbnails for')
+    _collage.add_argument('-o', '--output', dest = 'output_file', default = 'collage.jpg', help = 'Output file')
+    _collage.add_argument('--threads', dest = 'threads', default = 4, help = 'Number of files to process in parallel from dir input')
+    _collage.add_argument('--csv', dest = 'input_is_csv', action = "store_true", help = 'Input item is a .csv file to load data from')
     _collage.set_defaults(func = make_collage)
     """
+    $ bin/img.py collage assets/ --output collage.jpg --threads 6
+    $ bin/img.py collage data.csv --output collage.jpg --csv
     """
 
     args = parser.parse_args()
