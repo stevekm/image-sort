@@ -12,6 +12,10 @@ from pathlib import Path
 import argparse
 from typing import Generator, Tuple, List, Dict
 
+
+# ~~~~~ METHODS ~~~~~ #
+# these are mostly legacy functions developed a long time ago that are kept
+# because they still work
 def get_img_rgbs(image: str) -> Generator[Tuple[int, int, int], None, None]:
     """
     Get the RGB values for every pixel in an image
@@ -207,7 +211,9 @@ def get_avgs(
 
 
 
-
+# ~~~~~ OBJECTS ~~~~~ #
+# custom object class for easily generating image averages
+# use this class instead of calling the previous methods directly !!
 class Avg(object):
     """
     Holds the attributes of image's average RGB HSV values
@@ -298,7 +304,8 @@ class Avg(object):
 
 
 
-
+# ~~~~~ CLI ~~~~~ #
+# functions for running the module as a command line script
 def print_from_path(
         path: str,
         output_file: str = '-',
