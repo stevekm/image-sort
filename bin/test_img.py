@@ -84,9 +84,18 @@ class TestIMG(unittest.TestCase):
         values = [1, 255, 2, 0.5, 0, 255]
         with open(green_csv, "w") as f:
             f.write(','.join([ str(v) for v in values ]))
-
         # get the average after subtracting the green values
-        avg = get_img_avg_rgb(colors_jpg, ignore = green_csv,  _verbose = False)
+        avg = get_img_avg_rgb(colors_jpg, ignore_csvfile = green_csv,  _verbose = False)
+        self.assertDictEqual(avg, colors_minus_green_expected)
+
+        # use a dict of values for the ignore pixel list
+        ignore_list = [{'red': 1, 'green': 255, 'blue': 2}]
+        avg = get_img_avg_rgb(colors_jpg, ignore_list = ignore_list,  _verbose = False)
+        self.assertDictEqual(avg, colors_minus_green_expected)
+
+        # use an Avg instance to ignore from
+        ignore_avg = Avg.from_dict({'red': 1, 'green': 255, 'blue': 2, 'hue': 0, 'saturation': 0, 'value': 0, 'path': 'foo', 'pixels_total': 0, 'pixels_counted': 0, 'pixels_pcnt': 0})
+        avg = get_img_avg_rgb(colors_jpg, ignore_avg = ignore_avg,  _verbose = False)
         self.assertDictEqual(avg, colors_minus_green_expected)
 
     def test_get_avgs(self):
@@ -104,7 +113,7 @@ class TestIMG(unittest.TestCase):
         values = [1, 255, 2, 0.5, 0, 255]
         with open(green_csv, "w") as f:
             f.write(','.join([ str(v) for v in values ]))
-        avgs = get_avgs([colors_jpg], ignore = green_csv, _verbose = False)
+        avgs = get_avgs([colors_jpg], ignore_csvfile = green_csv, _verbose = False)
         expected = [colors_minus_green_expected]
         self.assertEqual(avgs, expected)
 

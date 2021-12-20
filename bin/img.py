@@ -64,7 +64,9 @@ def load_csv_rgbhsv(
 
 def get_img_avg_rgb(
     image: str,
-    ignore: str = None,
+    ignore_csvfile: str = None,
+    ignore_list: List[Dict] = None,
+    ignore_avg: Avg = None,
     _verbose: bool = True
     ) -> Dict:
     """
@@ -77,15 +79,38 @@ def get_img_avg_rgb(
     https://www.hackzine.org/getting-average-image-color-from-python.html
     https://stackoverflow.com/questions/6208980/sorting-a-list-of-rgb-triplets-into-a-spectrum
     """
-    ignore_pixels = set()
-    if ignore != None:
-        ignore_pixels_list = load_csv_rgbhsv(input_path = ignore)
+    ignore_pixels = set() # ['RGB', ... ] ; ['255255255', ... ]
+    # load pixels to ignore from a csv file
+    # NOTE: this is a really bad method that should be deprecated or rewritten
+    if ignore_csvfile != None:
+        ignore_pixels_list = load_csv_rgbhsv(input_path = ignore_csvfile)
         ignore_pixels_list = [ (tup[0], tup[1], tup[2]) for tup in ignore_pixels_list ]
         for tup in ignore_pixels_list:
-            id = "{0}{1}{2}".format(tup[0], tup[1], tup[2])
+            id = "{0}.{1}.{2}".format(tup[0], tup[1], tup[2])
             ignore_pixels.add(id)
         if _verbose:
             print("Loaded {0} ignore pixels".format(len(ignore_pixels)))
+
+    # load pixels to ignore from a list of dicts or Avg objects
+    if ignore_list != None:
+        for item in ignore_list:
+            if isinstance(item, dict):
+                id = "{0}.{1}.{2}".format(item['red'], item['green'], item['blue'])
+                ignore_pixels.add(id)
+            elif hasattr(item, 'to_dict'):
+                d = item.to_dict()
+                id = "{0}.{1}.{2}".format(d['red'], d['green'], d['blue'])
+                ignore_pixels.add(id)
+        if _verbose:
+            print("Loaded {0} ignore pixels".format(len(ignore_pixels)))
+
+    # load pixels to ignore from an Avg instance
+    if ignore_avg != None:
+        id = "{0}.{1}.{2}".format(ignore_avg.red, ignore_avg.green, ignore_avg.blue)
+        ignore_pixels.add(id)
+        if _verbose:
+            print("Loaded {0} ignore pixels".format(len(ignore_pixels)))
+
     img = Image.open(image).convert('RGB')
     pixels = img.load()
     size_x = img.size[0]
@@ -111,7 +136,7 @@ def get_img_avg_rgb(
 
             # skip the pixel if it matches one of the ignored pixels
             if len(ignore_pixels) > 0:
-                id = "{0}{1}{2}".format(red, green, blue)
+                id = "{0}.{1}.{2}".format(red, green, blue)
                 if id not in ignore_pixels:
                     avg['red'] += red
                     avg['green'] += green
@@ -146,7 +171,9 @@ def get_avgs(
         *args,
         **kwargs) -> List[Dict]:
     """
-    Get the average RBG HSV values for all the images
+    Get the average RBG HSV values for all the images in the list
+    With optional parallel processing
+    Sort the output list based on key
     """
     avgs = []
     # run in single-threaded mode
