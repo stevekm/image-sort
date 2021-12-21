@@ -41,6 +41,16 @@ mkdir -p output
 ./imagesort.py gif data.csv --csv --output image.gif -x 150 -y 150 --bar 50
 ```
 
+Example output
+
+- `collage` output
+ 
+<img src="/examples/collage.jpg" width="400" height="600" />
+
+- `gif` output
+
+![gif](/examples/image.gif)
+
 # Installation
 
 Clone this repo
