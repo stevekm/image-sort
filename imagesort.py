@@ -571,6 +571,9 @@ def main():
     _gif.add_argument('-o', '--output', dest = 'output_file', default = 'image.gif', help = 'Output file')
     _gif.add_argument('--threads', dest = 'threads', default = 4, help = 'Number of files to process in parallel from dir input')
     _gif.add_argument('--ignore', dest = 'ignore_file', default = None, help = 'File with pixels that should be ignored when calculating averages')
+    _gif.add_argument('-x', dest = 'x', default = 300, type = int, help = 'Width of output image thumbnail for gif')
+    _gif.add_argument('-y', dest = 'y', default = 300, type = int, help = 'Height of output image thumbnail for gif')
+    _gif.add_argument('--bar', dest = 'bar_height', default = 50, type = int, help = 'Height of output image average color bar for thumbnail for gif')
     _gif.set_defaults(func = make_gif)
     """
     $ ./imagesort.py gif assets/ --output image.gif --threads 6
