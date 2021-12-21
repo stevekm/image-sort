@@ -2,6 +2,8 @@
 """
 Module with helper functions for image processing tasks
 
+TODO: reduce duplicate code amongst the CLI methods
+
 Notes
 ---------------
 https://codegolf.stackexchange.com/questions/53621/force-an-average-on-an-image
@@ -65,6 +67,8 @@ class Avg(object):
             *args, **kwargs) -> Dict:
         """
         Get the average RGB and HSV values from an image file path
+
+        TODO: Need to check that we are really ignoring all the input ignore pixels, its not entirely clear that its working on the asset images
         """
         # check if there are some pixels to ignore
         ignore_pixel_ids = set()
@@ -256,12 +260,13 @@ def print_from_path(
         output_file: str = '-',
         threads: int = 4,
         ignore_file: str = None,
+        sort_key: str = 'hue',
         func = None):
     """
     Print image average RGB values to stdout or file
     """
     path = Path(path)
-    avg_args = {}
+    avg_args = {'sort_key': sort_key}
 
     ignore_pixels = []
     if ignore_file:
@@ -332,6 +337,7 @@ def make_thumbnails(
         bar_height: int = 50,
         ignore_file: str = None,
         rename: bool = True,
+        sort_key: str = 'hue',
         *args, **kwargs) -> List[str]:
     """
     Create thumbnail images with average color information
@@ -341,7 +347,7 @@ def make_thumbnails(
         print(">>> ERROR: either input_avgs or input_files or input_path must be supplied")
         raise
 
-    avg_args = {}
+    avg_args = {'sort_key': sort_key}
     ignore_pixels = []
     if ignore_file:
         ignore_pixels = set(load_all_pixels(ignore_file))
@@ -404,11 +410,14 @@ def make_collage(
         y: int = 300, # height of each image
         ncol: int = 8, # number of columns in the collage
         bar_height: int = 50, # height for average colore bar on each image
+        sort_key: str = 'hue',
         *args, **kwargs) -> str:
     """
     Make a collage image out of the supplied input image
     Adapted from https://github.com/fwenzel/collage
     """
+    avg_args = {'sort_key':sort_key}
+
     if not any([input_dicts, input_avgs, input_path]):
         print(">>> ERROR: either input_avgs or input_dicts or input_path must be supplied")
         raise
@@ -418,7 +427,7 @@ def make_collage(
             input_avgs = Avg.from_csv(input_path)
         else:
             # NOTE: this will automatically apply sorting
-            input_avgs = Avg.from_dir(dir = input_path, *args, **kwargs)
+            input_avgs = Avg.from_dir(dir = input_path, *args, **avg_args, **kwargs)
 
     if input_dicts and not input_avgs:
         input_avgs = [ Avg.from_dict(d) for d in input_dicts ]
@@ -474,6 +483,7 @@ def make_gif(
         x: int = 300,
         y: int = 300,
         bar_height: int = 50,
+        sort_key: str = 'hue',
         *args, **kwargs) -> str:
     """
     https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#gif
@@ -489,7 +499,7 @@ def make_gif(
     img_height = y
 
     # check if ignore file was used
-    avg_args = {}
+    avg_args = {'sort_key':sort_key}
     ignore_pixels = []
     if ignore_file:
         ignore_pixels = set(load_all_pixels(ignore_file))
@@ -542,12 +552,16 @@ def main():
     # add sub-parsers for specific file outputs
     subparsers = parser.add_subparsers(help ='Sub-commands available')
 
+    sort_key_choices = ['path', 'red', 'green', 'blue', 'hue', 'saturation', 'value', 'pixels_total', 'pixels_counted', 'pixels_pcnt']
+
     # subparser for printing avg table output
     _print = subparsers.add_parser('print', help = 'Print sorted image data to console')
     _print.add_argument(dest = 'path', help = 'Input path to file or dir to print data for')
     _print.add_argument('--output', dest = 'output_file', default = "-", help = 'The name of the output file')
     _print.add_argument('--threads', dest = 'threads', default = 4, help = 'Number of files to process in parallel')
     _print.add_argument('--ignore', dest = 'ignore_file', default = None, help = 'File with pixels that should be ignored when calculating averages')
+    _print.add_argument('-k', '--key', dest = 'sort_key', default = 'hue',
+        choices = sort_key_choices, help = 'Value to use for sorting output entries')
     _print.set_defaults(func = print_from_path)
     """
     $ ./imagesort.py print assets/ --threads 6 --ignore ignore-pixels-white.jpg
@@ -565,6 +579,8 @@ def main():
     _thumbnails.add_argument('-x', dest = 'x', default = 300, type = int, help = 'Width of output image thumbnail')
     _thumbnails.add_argument('-y', dest = 'y', default = 300, type = int, help = 'Height of output image thumbnail')
     _thumbnails.add_argument('--bar', dest = 'bar_height', default = 50, type = int, help = 'Height of output image average color bar for thumbnail')
+    _thumbnails.add_argument('-k', '--key', dest = 'sort_key', default = 'hue',
+        choices = sort_key_choices, help = 'Value to use for sorting output entries')
     _thumbnails.set_defaults(func = make_thumbnails)
     """
     $ ./imagesort.py thumbnails assets/ --output thumbnail_output/ --threads 6
@@ -580,6 +596,8 @@ def main():
     _collage.add_argument('-y', dest = 'y', default = 300, type = int, help = 'Height of output image thumbnail for collage')
     _collage.add_argument('--bar', dest = 'bar_height', default = 50, type = int, help = 'Height of output image average color bar for thumbnail for collage')
     _collage.add_argument('-n', '--ncol', dest = 'ncol', default = 8, type = int, help = 'Number of columns in the collage')
+    _collage.add_argument('-k', '--key', dest = 'sort_key', default = 'hue',
+        choices = sort_key_choices, help = 'Value to use for sorting output entries')
     _collage.set_defaults(func = make_collage)
     """
     $ ./imagesort.py collage assets/ --output collage.jpg --threads 6
@@ -595,6 +613,8 @@ def main():
     _gif.add_argument('-x', dest = 'x', default = 300, type = int, help = 'Width of output image thumbnail for gif')
     _gif.add_argument('-y', dest = 'y', default = 300, type = int, help = 'Height of output image thumbnail for gif')
     _gif.add_argument('--bar', dest = 'bar_height', default = 50, type = int, help = 'Height of output image average color bar for thumbnail for gif')
+    _gif.add_argument('-k', '--key', dest = 'sort_key', default = 'hue',
+        choices = sort_key_choices, help = 'Value to use for sorting output entries')
     _gif.set_defaults(func = make_gif)
     """
     $ ./imagesort.py gif assets/ --output image.gif --threads 6

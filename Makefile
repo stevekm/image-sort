@@ -39,18 +39,22 @@ test:
 	./test_imagesort.py
 
 # run all the test CLI commands
-THREADS:=6
+THREADS:=4
 test-commands:
 	set -eux
 	mkdir -p thumbnail_output
 	./imagesort.py print assets/ --threads $(THREADS) --ignore ignore-pixels-white.jpg
 	./imagesort.py print assets/ --threads $(THREADS) --ignore ignore-pixels-white.jpg > data.csv
+	./imagesort.py print assets/ --key red --threads $(THREADS) --ignore ignore-pixels-white.jpg > red.csv
 	./imagesort.py thumbnails assets/ --output thumbnail_output/ --threads $(THREADS)
 	./imagesort.py thumbnails assets/ --output thumbnail_output/ --threads $(THREADS) -x 200 -y 200 --bar 60
+	./imagesort.py thumbnails assets/ --output thumbnail_output/ --key red --threads $(THREADS) -x 200 -y 200 --bar 60
 	./imagesort.py thumbnails data.csv --output thumbnail_output/ -x 200 -y 200 --bar 60 --csv
 	./imagesort.py collage assets/ --output collage.jpg --threads $(THREADS)
+	./imagesort.py collage assets/ --output collage.jpg --threads $(THREADS) --key red
 	./imagesort.py collage data.csv --output collage.jpg --csv -x 200 -y 200 --bar 60 --ncol 5
 	./imagesort.py gif assets/ --output image.gif --threads $(THREADS) -x 200 -y 200 --bar 60
+	./imagesort.py gif assets/ --output red.gif --threads $(THREADS) -x 200 -y 200 --bar 60 --key red
 	./imagesort.py gif data.csv --output image.gif --csv -x 200 -y 200 --bar 60
 
 
