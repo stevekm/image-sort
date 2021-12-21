@@ -2,17 +2,46 @@
 
 [[Docker Hub](https://hub.docker.com/repository/docker/stevekm/image-sort)]
 
-Program to sort images based on color values.
+Program to sort images based on average color values. `imagesort.py` is able to:
 
-## Contents
+- `print` a sorted csv format table of the average RGB (red, green, blue) and HSV (hue, saturation, value) attributes of each image
 
-- `sort-images.py`: script to sort all supplied images based on color (defaults to sorting by Hue value), individual images can be passed or directories containing images. Saves a .csv file with the images in sorted order (`images.rgb.hsv.csv`)
+- create `thumbnail` output of supplied images with numeric filenames ordered by average RGB or HSV values
 
-- `list2filmstrip.py`: Reads the contents of `images.rgb.hsv.csv` and generates a horizontal filmstrip image to show the sorted images in sequence (`filmstrip.jpg`).
+- create a `collage` output of all thumbnails of all supplied sorted images along with color information on each image's average RGB value
 
-- `list2collage.py`: Reads the contents of `images.rgb.hsv.csv` and generates a two dimensional collage to show the sorted images in sequence (`collage.jpg`).
+- create an animated `gif` that will quickly flip through all the sorted thumbnails
 
-# Installation & Usage
+- perform multi-threaded parallel image processing when files are supplied in a directory
+
+- adjust the size of output images along with the `key` value used for sorting (default: `"hue"`)
+
+- supply a secondary image file with pixels to `ignore` amongst input images, for example to help remove the effects of unwanted background colors on the calculated average RGB values
+
+## Examples
+
+Example commands
+
+- print table of values
+
+```
+./imagesort.py print assets/jpg/Animals-1/ --threads 2 --key red --ignore ignore-pixels-white.jpg
+```
+
+- save a table of values, then read it back to create thumbnails, collage, and gif
+
+```
+./imagesort.py print assets/jpg/Animals-1/ --threads 4 --ignore ignore-pixels-white.jpg > data.csv
+
+mkdir -p output
+./imagesort.py thumbnails data.csv --csv --output output/ -x 200 -y 200 --bar 60
+
+./imagesort.py collage data.csv --output collage.jpg --csv -x 200 -y 200 --bar 60 --ncol 5
+
+./imagesort.py gif data.csv --csv --output image.gif -x 150 -y 150 --bar 50
+```
+
+# Installation
 
 Clone this repo
 
@@ -23,61 +52,36 @@ cd image-sort
 
 ## Install with `conda`
 
-Install dependencies into a local `conda` installation in the current directory
+Install dependencies into a local `conda` installation in the current `image-sort` directory
 
 ```
-make conda-install
+make install
+
+# activate the conda env
+source conda/bin/activate
+
+# deactivate it when you are done
+conda deactivate
 ```
 
-### Usage
+### Testing
 
-Run a test with the included images in the `assets` directory
-
-```
-make run
-```
-
-Run with another directory
+Run the test suite with
 
 ```
-run IMGDIR=/path/to/some/directory
+make test
 ```
 
-The scripts can be run individually with custom configs if the required dependencies are installed.
-
-### Software
-
-Dependencies are installed by default with `conda` from the Makefile recipe `make conda-install`
-
-- Python 2.7 (required for `PIL`)
-
-- PIL (Python Imaging Library)
-
-- GNU Makefile
-
-- Nextflow 19.01.0 (requires Java 8)
-
-Tested on macOS 10.12.6
-
-## Docker Usage
-
-If you have trouble getting the required dependencies installed, you can also use the pre-built [Docker container](https://hub.docker.com/repository/docker/stevekm/image-sort).
+Run the set of example CLI commands with
 
 ```
-# replace $PWD/images with the full path to your directory of images
-# replace $PWD/output with the full path to your desired output location
-
-docker run --rm -ti -v $PWD:$PWD stevekm/image-sort:latest nextflow run main.nf --imgdir $PWD/images --outputDir $PWD/output
+make test-commands
 ```
 
-See the `docker-test` recipe in the included `Makefile` for examples of how to run the other components of this repo from the Docker container.
+## Docker
 
-# References
+If you have trouble installing the required dependencies, it can also be run with Docker.
 
-https://www.alanzucconi.com/2015/09/30/colour-sorting/
-
-https://smart.servier.com/image-set-download/
-
-https://adamspannbauer.github.io/2018/03/02/app-icon-dominant-colors/
-
-https://github.com/fwenzel/collage
+```
+docker run -v $PWD:$PWD --workdir $PWD stevekm/image-sort:latest imagesort.py --help
+```
