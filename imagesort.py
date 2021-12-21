@@ -326,6 +326,7 @@ def make_thumbnails(
         input_path: str = None, # a single input file or directory
         input_files: List[str] = None, # list of file paths
         input_avgs: List[Avg] = None, # list of Avg instances
+        input_is_csv: bool = False, # input_path is a .csv file
         x: int = 300,
         y: int = 300,
         bar_height: int = 50,
@@ -354,6 +355,8 @@ def make_thumbnails(
         # find all files in the dir
         if input_path.is_dir():
             input_files = [ p for p in input_path.glob('**/*') if p.is_file() ]
+        elif input_is_csv:
+            input_avgs = Avg.from_csv(input_path)
         elif input_path.is_file():
             input_files = [input_path]
 
@@ -465,6 +468,7 @@ def make_collage(
 def make_gif(
         input_path: str = None,
         input_avgs: List[Avg] = None,
+        input_is_csv: bool = False, # input_path is a .csv file
         output_file: str = "image.gif",
         ignore_file: str = None,
         x: int = 300,
@@ -495,8 +499,11 @@ def make_gif(
 
     # load all Avg instances if a input dir was passed
     if input_path:
-        # NOTE: this will automatically apply sorting
-        input_avgs = Avg.from_dir(dir = input_path, *args, **avg_args, **kwargs)
+        if input_is_csv:
+            input_avgs = Avg.from_csv(input_path)
+        else:
+            # NOTE: this will automatically apply sorting
+            input_avgs = Avg.from_dir(dir = input_path, *args, **avg_args, **kwargs)
 
     # start making thumbnails for each image
     thumbnails = []
@@ -526,6 +533,8 @@ def make_gif(
 def main():
     """
     Main control function for running the module from command line
+
+    TODO: move common args to top level parser
     """
     # top level CLI arg parser; args common to all output files go here
     parser = argparse.ArgumentParser(description = '')
@@ -548,6 +557,7 @@ def main():
     # subparser for making thumbnails
     _thumbnails = subparsers.add_parser('thumbnails', help = 'Create thumbnails which include the average color for each image')
     _thumbnails.add_argument('input_path', help = 'Input path to file or dir to make thumbnails for')
+    _thumbnails.add_argument('--csv', dest = 'input_is_csv', action = "store_true", help = 'Input item is a .csv file to load data from')
     _thumbnails.add_argument('-o', '--output', dest = 'output_dir', required = True, help = 'The name of the output directory')
     _thumbnails.add_argument('--threads', dest = 'threads', default = 4, help = 'Number of files to process in parallel')
     _thumbnails.add_argument('--ignore', dest = 'ignore_file', default = None, help = 'File with pixels that should be ignored when calculating averages')
@@ -578,6 +588,7 @@ def main():
 
     _gif = subparsers.add_parser('gif', help = 'Create gif from all images which includes the average color for each image')
     _gif.add_argument('input_path', help = 'Input path to file or dir to make thumbnails for')
+    _gif.add_argument('--csv', dest = 'input_is_csv', action = "store_true", help = 'Input item is a .csv file to load data from')
     _gif.add_argument('-o', '--output', dest = 'output_file', default = 'image.gif', help = 'Output file')
     _gif.add_argument('--threads', dest = 'threads', default = 4, help = 'Number of files to process in parallel from dir input')
     _gif.add_argument('--ignore', dest = 'ignore_file', default = None, help = 'File with pixels that should be ignored when calculating averages')
