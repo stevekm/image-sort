@@ -12,6 +12,7 @@ import hashlib
 from imagesort import Avg
 from imagesort import make_thumbnail, make_thumbnails, load_all_pixels, write_csv
 from imagesort import make_collage
+from imagesort import make_gif
 
 # get paths to the fixture image files
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -139,7 +140,7 @@ class TestThumbnails(unittest.TestCase):
         """
         avg = Avg(path = colors_jpg)
         output_file = os.path.join(self.tmpdir, "0.jpg")
-        output = make_thumbnail(red = avg.red, blue = avg.blue, green = avg.green, input_path = avg.path, output_path = output_file)
+        output, canvas = make_thumbnail(red = avg.red, blue = avg.blue, green = avg.green, input_path = avg.path, output_path = output_file)
         md5 = md5_file(output)
         expected = '83a42111ab98bf1d5b472f5df3b6ef9d'
         self.assertEqual(md5, expected)
@@ -224,6 +225,28 @@ class TestCollage(unittest.TestCase):
         expected = '67d1e4971ab259ee868aef35740648c8'
         self.assertEqual(md5, expected)
 
+class TestGIF(unittest.TestCase):
+    def setUp(self):
+        """this gets run for each test case"""
+        self.preserve = False # save the tmpdir
+        self.tmpdir = mkdtemp() # dir = THIS_DIR
+
+    def tearDown(self):
+        """this gets run for each test case"""
+        if not self.preserve:
+            # remove the tmpdir upon test completion
+            shutil.rmtree(self.tmpdir)
+
+    def test_make_gif(self):
+        """
+        Test that a gif is made from multiple Avg instances
+        """
+        input_avgs = [Avg(colors_jpg), Avg(green_jpg)]
+        output_file = os.path.join(self.tmpdir, "image.gif")
+        output = make_gif(input_avgs = input_avgs, output_file = output_file)
+        md5 = md5_file(output)
+        expected = '17e91ee6398c06f038c4f94584c4d8a2'
+        self.assertEqual(md5, expected)
 
 
 if __name__ == "__main__":

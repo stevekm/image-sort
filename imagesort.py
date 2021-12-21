@@ -13,6 +13,7 @@ from __future__ import annotations # python 3.7+
 import os
 import sys
 import csv
+from io import BytesIO
 from PIL import Image
 import colorsys
 from multiprocessing import Pool
@@ -303,7 +304,7 @@ def make_thumbnail(
         img_width: int = 300,
         img_height: int = 300,
         bar_height: int = 50,
-        ) -> output_path:
+        ) -> Tuple[str, Image]:
     """
     Make a thumbnail from a single image and its average RGB values
     Using the avg RBG as a background color upon which to place and scaled version
@@ -316,8 +317,8 @@ def make_thumbnail(
     # load image and add to canvas
     image = Image.open(input_path).resize((img_width, img_height), Image.ANTIALIAS)
     canvas.paste(image, (0, 0))
-    canvas.save(output_path)
-    return(output_path)
+    canvas.save(output_path, format='JPEG')
+    return(output_path, canvas)
 
 
 def make_thumbnails(
@@ -386,7 +387,7 @@ def make_thumbnails(
             'img_height': y,
             'bar_height': bar_height
             }
-        output = make_thumbnail(**kwds)
+        output, canvas = make_thumbnail(**kwds)
         output_paths.append(output)
     return(output_paths)
 
@@ -461,6 +462,64 @@ def make_collage(
 
     return(output_file)
 
+def make_gif(
+        input_path: str = None,
+        input_avgs: List[Avg] = None,
+        output_file: str = "image.gif",
+        ignore_file: str = None,
+        x: int = 300,
+        y: int = 300,
+        bar_height: int = 50,
+        *args, **kwargs) -> str:
+    """
+    https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#gif
+    """
+    if not any([input_avgs, input_path]):
+        print(">>> ERROR: either input_avgs or input_path must be supplied")
+        raise
+
+    img_width = x
+    img_height = y
+
+    # check if ignore file was used
+    avg_args = {}
+    ignore_pixels = []
+    if ignore_file:
+        ignore_pixels = set(load_all_pixels(ignore_file))
+
+    if ignore_pixels:
+        avg_args['ignore_vals'] = ignore_pixels
+
+    # load all Avg instances if a input dir was passed
+    if input_path:
+        # NOTE: this will automatically apply sorting
+        input_avgs = Avg.from_dir(dir = input_path, *args, **avg_args, **kwargs)
+
+    # start making thumbnails for each image
+    thumbnails = []
+    for avg in input_avgs:
+        output_obj = BytesIO() # store the thumbnails in memory
+        kwds = {
+            'red': avg.red,
+            'blue': avg.blue,
+            'green': avg.green,
+            'input_path': avg.path,
+            'output_path': output_obj,
+            'img_width': img_width,
+            'img_height': img_height,
+            'bar_height': bar_height
+            }
+        output_obj, canvas = make_thumbnail(**kwds)
+        thumbnails.append(canvas)
+
+    # write out the final gif animation
+    first = thumbnails.pop(0)
+    first.save(fp=output_file, format='GIF', append_images=thumbnails,
+             save_all=True, duration=100, loop=0)
+
+    return(output_file)
+
+
 def main():
     """
     Main control function for running the module from command line
@@ -505,6 +564,16 @@ def main():
     """
     $ ./imagesort.py collage assets/ --output collage.jpg --threads 6
     $ ./imagesort.py collage data.csv --output collage.jpg --csv
+    """
+
+    _gif = subparsers.add_parser('gif', help = 'Create gif from all images which includes the average color for each image')
+    _gif.add_argument('input_path', help = 'Input path to file or dir to make thumbnails for')
+    _gif.add_argument('-o', '--output', dest = 'output_file', default = 'image.gif', help = 'Output file')
+    _gif.add_argument('--threads', dest = 'threads', default = 4, help = 'Number of files to process in parallel from dir input')
+    _gif.add_argument('--ignore', dest = 'ignore_file', default = None, help = 'File with pixels that should be ignored when calculating averages')
+    _gif.set_defaults(func = make_gif)
+    """
+    $ ./imagesort.py gif assets/ --output image.gif --threads 6
     """
 
     args = parser.parse_args()
