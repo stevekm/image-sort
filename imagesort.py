@@ -473,6 +473,9 @@ def make_gif(
         *args, **kwargs) -> str:
     """
     https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#gif
+
+    equivalent to imagemagick:
+    $ convert -resize 90% -delay 10 -loop 0 $(OUTPUTDIR)/thumbnails/{1..$(NUM_JPG)}.jpg $(OUTPUTDIR)/sequence.gif
     """
     if not any([input_avgs, input_path]):
         print(">>> ERROR: either input_avgs or input_path must be supplied")
@@ -549,6 +552,9 @@ def main():
     _thumbnails.add_argument('--threads', dest = 'threads', default = 4, help = 'Number of files to process in parallel')
     _thumbnails.add_argument('--ignore', dest = 'ignore_file', default = None, help = 'File with pixels that should be ignored when calculating averages')
     _thumbnails.add_argument('--no-rename', dest = 'rename', action = "store_false", help = 'Do not rename the output files. WARNING: files with the same basename will get overwritten')
+    _thumbnails.add_argument('-x', dest = 'x', default = 300, type = int, help = 'Width of output image thumbnail')
+    _thumbnails.add_argument('-y', dest = 'y', default = 300, type = int, help = 'Height of output image thumbnail')
+    _thumbnails.add_argument('--bar', dest = 'bar_height', default = 50, type = int, help = 'Height of output image average color bar for thumbnail')
     _thumbnails.set_defaults(func = make_thumbnails)
     """
     $ ./imagesort.py thumbnails assets/ --output thumbnail_output/ --threads 6

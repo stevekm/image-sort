@@ -1,4 +1,4 @@
-SHELL:=/bin/bash
+export SHELL:=/bin/bash
 .ONESHELL:
 UNAME:=$(shell uname)
 
@@ -46,15 +46,10 @@ test-commands:
 	./imagesort.py print assets/ --threads $(THREADS) --ignore ignore-pixels-white.jpg
 	./imagesort.py print assets/ --threads $(THREADS) --ignore ignore-pixels-white.jpg > data.csv
 	./imagesort.py thumbnails assets/ --output thumbnail_output/ --threads $(THREADS)
+	./imagesort.py thumbnails assets/ --output thumbnail_output/ --threads $(THREADS) -x 200 -y 200 --bar 60
 	./imagesort.py collage assets/ --output collage.jpg --threads $(THREADS)
 	./imagesort.py collage data.csv --output collage.jpg --csv -x 200 -y 200 --bar 60 --ncol 5
 	./imagesort.py gif assets/ --output image.gif --threads $(THREADS) -x 200 -y 200 --bar 60
-
-# requires imagemagick; sudo apt-get install imagemagick
-# NUM_JPG:=$(shell find $(OUTPUTDIR)/thumbnails/ -name "*.jpg" | wc -l | tr -d ' ')
-# gif:
-# 	convert -resize 90% -delay 10 -loop 0 $(OUTPUTDIR)/thumbnails/{1..$(NUM_JPG)}.jpg $(OUTPUTDIR)/sequence.gif
-
 
 VERSION=latest
 DOCKERTAG:=stevekm/image-sort:$(VERSION)
