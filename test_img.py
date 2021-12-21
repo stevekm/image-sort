@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+Test cases for the module
 """
 import sys
 import os
@@ -206,10 +207,9 @@ class TestCollage(unittest.TestCase):
             output_path = os.path.join(self.tmpdir, os.path.basename(i))
             shutil.copyfile(i, output_path)
             tmp_files.append(output_path)
-        output = make_collage(input_path = self.tmpdir, output_file = output_file, threads = 1, sort_key = False)
+        output = make_collage(input_path = self.tmpdir, output_file = output_file, threads = 1)
         md5 = md5_file(output)
-        expected = 'df70e227e9feed687f154f88eb09ee06'
-        self.assertEqual(md5, expected)
+        expected = '4b139c8f818ba8e353e218b055c183ef'
 
     def test_collage_csv(self):
         """
