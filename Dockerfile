@@ -32,8 +32,8 @@ RUN conda install -y anaconda::pillow=8.0.0 python=3.7.4
 
 # add this repo contents
 RUN mkdir -p /image-sort
-ADD img.py /image-sort/img.py
-ADD test_img.py /image-sort/test_img.py
+ADD imagesort.py /image-sort/imagesort.py
+ADD test_imagesort.py /image-sort/test_imagesort.py
 ADD fixtures /image-sort/fixtures
 ADD assets /image-sort/assets
 ENV PATH="/image-sort:${PATH}"

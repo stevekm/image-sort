@@ -9,9 +9,9 @@ import shutil
 from tempfile import mkdtemp
 import colorsys
 import hashlib
-from img import Avg
-from img import make_thumbnail, make_thumbnails, load_all_pixels, write_csv
-from img import make_collage
+from imagesort import Avg
+from imagesort import make_thumbnail, make_thumbnails, load_all_pixels, write_csv
+from imagesort import make_collage
 
 # get paths to the fixture image files
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))

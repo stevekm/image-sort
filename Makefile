@@ -47,4 +47,4 @@ docker-build:
 # docker push stevekm/image-sort:latest
 
 docker-test:
-	docker run --rm -ti "$(DOCKERTAG)" test_img.py
+	docker run --rm -ti "$(DOCKERTAG)" test_imagesort.py

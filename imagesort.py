@@ -479,8 +479,8 @@ def main():
     _print.add_argument('--ignore', dest = 'ignore_file', default = None, help = 'File with pixels that should be ignored when calculating averages')
     _print.set_defaults(func = print_from_path)
     """
-    $ img.py print assets/ --threads 6 --ignore ignore-pixels-white.jpg
-    $ img.py print assets/ --threads 6 --ignore ignore-pixels-white.jpg > data.csv
+    $ ./imagesort.py print assets/ --threads 6 --ignore ignore-pixels-white.jpg
+    $ ./imagesort.py print assets/ --threads 6 --ignore ignore-pixels-white.jpg > data.csv
     """
 
     # subparser for making thumbnails
@@ -492,7 +492,7 @@ def main():
     _thumbnails.add_argument('--no-rename', dest = 'rename', action = "store_false", help = 'Do not rename the output files. WARNING: files with the same basename will get overwritten')
     _thumbnails.set_defaults(func = make_thumbnails)
     """
-    $ img.py thumbnails assets/ --output thumbnail_output/ --threads 6
+    $ ./imagesort.py thumbnails assets/ --output thumbnail_output/ --threads 6
     """
 
     # subparser for making collage
@@ -503,8 +503,8 @@ def main():
     _collage.add_argument('--csv', dest = 'input_is_csv', action = "store_true", help = 'Input item is a .csv file to load data from')
     _collage.set_defaults(func = make_collage)
     """
-    $ img.py collage assets/ --output collage.jpg --threads 6
-    $ img.py collage data.csv --output collage.jpg --csv
+    $ ./imagesort.py collage assets/ --output collage.jpg --threads 6
+    $ ./imagesort.py collage data.csv --output collage.jpg --csv
     """
 
     args = parser.parse_args()
