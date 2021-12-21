@@ -560,6 +560,10 @@ def main():
     _collage.add_argument('-o', '--output', dest = 'output_file', default = 'collage.jpg', help = 'Output file')
     _collage.add_argument('--threads', dest = 'threads', default = 4, help = 'Number of files to process in parallel from dir input')
     _collage.add_argument('--csv', dest = 'input_is_csv', action = "store_true", help = 'Input item is a .csv file to load data from')
+    _collage.add_argument('-x', dest = 'x', default = 300, type = int, help = 'Width of output image thumbnail for collage')
+    _collage.add_argument('-y', dest = 'y', default = 300, type = int, help = 'Height of output image thumbnail for collage')
+    _collage.add_argument('--bar', dest = 'bar_height', default = 50, type = int, help = 'Height of output image average color bar for thumbnail for collage')
+    _collage.add_argument('-n', '--ncol', dest = 'ncol', default = 8, type = int, help = 'Number of columns in the collage')
     _collage.set_defaults(func = make_collage)
     """
     $ ./imagesort.py collage assets/ --output collage.jpg --threads 6
